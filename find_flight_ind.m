@@ -1,11 +1,11 @@
-function bsp_data=find_flight_ind(bsp_data,behave_ts,params_file_name,ball_pos_name);
+function bsp_data=find_flight_ind(bsp_data,behave_ts,behav_params_file_name,ball_pos_name);
 %find flight index based on distance from ball and velocity:
 % flight index is defined:
 %1. when the bat is not on the ball(X meters from the ball)
 %2. velocity is higher than x
 %3. velocity is small but for short times (u-turns for example).
 
-load(params_file_name)
+load(behav_params_file_name)
 us_factor=1e6;
 for tag_i=1:length(bsp_data)
    %load data:

@@ -23,6 +23,7 @@ for ii_cell = 70:length(data_dir_info)
     tag_self = cell_struct.exp_info.bsp_tag_self;
     tags = [cell_struct.bsp_data.tag_ID];
     tag_i = find(ismember(tags,tag_self));
+    bsp_data=cell_struct.bsp_data;   
     
     behav_struct_name=[behave_day_struct_folder,'behavioral_modes_bat_',num2str(bat),'_day_',num2str(day),'.mat'];
     
@@ -30,28 +31,12 @@ for ii_cell = 70:length(data_dir_info)
     behave_ts=[cell_struct.exp_info.nlg_events(2).start_time,cell_struct.exp_info.nlg_events(2).end_time];
     ball_pos_name=[ball_position_folder,'ball_pos_bat_',num2str(bat),'_day_',num2str(day),'.mat'];
     
-    % interpolate position of the other bat to have the same ts for both
-    % bats
-     ts=cell_struct.bsp_data(tag_i).ts_us_upsampled;
-     ts_original=cell_struct.bsp_data(3-tag_i).ts_us_upsampled;
-     pos_other_original=cell_struct.bsp_data(3-tag_i).pos_upsampled;
-     pos_other_x=interp1(ts_original,pos_other_original(1,:),ts);
-     pos_other_y=interp1(ts_original,pos_other_original(2,:),ts);
-
-     %define relevant bsp_data struct:
-    bsp_data(3-tag_i).pos=[pos_other_x;pos_other_y]';
-    bsp_data(3-tag_i).ts=ts';
-    
-    bsp_data(tag_i).pos=cell_struct.bsp_data(tag_i).pos_upsampled';
-    bsp_data(tag_i).ts=cell_struct.bsp_data(tag_i).ts_us_upsampled';
-
-    bsp_data=find_flight_ind(bsp_data,behave_ts,behav_param_file_name,ball_pos_name); % find when the bat is flying
-    %start_end_ts_ns = [cell_struct.exp_info.nlg_events(2).start_time_fitted_to_bsp_msec cell_struct.exp_info.nlg_events(3).end_time_fitted_to_bsp_msec] * 1e6;
+        %start_end_ts_ns = [cell_struct.exp_info.nlg_events(2).start_time_fitted_to_bsp_msec cell_struct.exp_info.nlg_events(3).end_time_fitted_to_bsp_msec] * 1e6;
     try
         load(behav_struct_name) 
     catch
         if day~=day_before
-            [behavioral_modes]=find_behavioral_modes(bsp_data ,behav_param_file_name,tag_i,bat,day,behave_ts,dir_param_file_name); % assign bsp samples to different behaviors
+            [behavioral_modes]=find_behavioral_modes(bsp_data ,behav_param_file_name,tag_i,bat,day,behave_ts,dir_param_file_name,ball_pos_name); % assign bsp samples to different behaviors
         else
             load(behav_struct_name)
         end
