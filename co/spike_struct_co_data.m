@@ -1,34 +1,34 @@
-function  co = spike_struct_co_data (bsp_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name)
+function  co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name)
  load(co_param_file_name)
   us_factor=1e6;
 %% create vectors of variables
 
 % a. time stamps
-bsp_ts = bsp_data(tag_i).ts;
+bsp_ts = bsp_proc_data(tag_i).ts;
 spikes_ts = cell_struct.spikes.spikes_ts_usec;
 
 % b. x position
-bsp_x_pos = bsp_data(tag_i).pos(:,1)';
-spikes_x_pos = interp1(bsp_data(tag_i).ts , bsp_data(tag_i).pos(:,1),spikes_ts);
+bsp_x_pos = bsp_proc_data(tag_i).pos(:,1)';
+spikes_x_pos = interp1(bsp_proc_data(tag_i).ts , bsp_proc_data(tag_i).pos(:,1),spikes_ts);
 
 % relative distance from the other bat
-bsp_dis_m = bsp_x_pos - bsp_data(3-tag_i).pos(:,1)';
-other_bat_pos_at_spikes = interp1(bsp_data(3-tag_i).ts , bsp_data(3-tag_i).pos(:,1),spikes_ts);
+bsp_dis_m = bsp_x_pos - bsp_proc_data(3-tag_i).pos(:,1)';
+other_bat_pos_at_spikes = interp1(bsp_proc_data(3-tag_i).ts , bsp_proc_data(3-tag_i).pos(:,1),spikes_ts);
 spikes_dis_m = spikes_x_pos - other_bat_pos_at_spikes;
 
 % y position
-self_y_pos = bsp_data(tag_i).pos(:,2)';
-spikes_y_pos = interp1(bsp_data(tag_i).ts, self_y_pos,spikes_ts);
+self_y_pos = bsp_proc_data(tag_i).pos(:,2)';
+spikes_y_pos = interp1(bsp_proc_data(tag_i).ts, self_y_pos,spikes_ts);
 
 % y difference between bats
-other_y_pos = bsp_data(3 - tag_i).pos(:,2)';
+other_y_pos = bsp_proc_data(3 - tag_i).pos(:,2)';
 y_diff = self_y_pos - other_y_pos;
-spikes_y_diff = interp1(bsp_data(tag_i).ts, y_diff,spikes_ts);
+spikes_y_diff = interp1(bsp_proc_data(tag_i).ts, y_diff,spikes_ts);
 
 % cross overs parameters
-co_x_positions = bsp_data(tag_i).pos(behavioral_modes.CO_point,1);
-co_times_usec = bsp_data(tag_i).ts(behavioral_modes.CO_point);
-co_directions = sign(co_x_positions - bsp_data(tag_i).pos(behavioral_modes.CO_point-1,1));
+co_x_positions = bsp_proc_data(tag_i).pos(behavioral_modes.CO_point,1);
+co_times_usec = bsp_proc_data(tag_i).ts(behavioral_modes.CO_point);
+co_directions = sign(co_x_positions - bsp_proc_data(tag_i).pos(behavioral_modes.CO_point-1,1));
 direction_ind = {find(co_directions>0),find(co_directions<0)};
 
 

@@ -1,4 +1,4 @@
-function  solo = spike_struct_solo_data (bsp_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name)
+function  solo = spike_struct_solo_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name)
 
 load(solo_param_file_name)
 
@@ -11,15 +11,15 @@ for ii_dir = 1:2
     dir_ind = behavioral_modes.directional_ind{ii_dir};
     
     %find bsp parameters
-    bsp_during_solo_ts_usec = bsp_data(tag_i).ts(intersect(solo_ind,dir_ind));
-    bsp_during_solo_x_pos = bsp_data(tag_i).pos(intersect(solo_ind,dir_ind),1);
-    bsp_during_solo_y_pos = bsp_data(tag_i).pos(intersect(solo_ind,dir_ind),2);
+    bsp_during_solo_ts_usec = bsp_proc_data(tag_i).ts(intersect(solo_ind,dir_ind));
+    bsp_during_solo_x_pos = bsp_proc_data(tag_i).pos(intersect(solo_ind,dir_ind),1);
+    bsp_during_solo_y_pos = bsp_proc_data(tag_i).pos(intersect(solo_ind,dir_ind),2);
     
     %find spikes parameters
     epochs=intersect(solo_ind,dir_ind);
     spikes_during_solo_ts_usec = find_spikes_in_epochs (epochs,cell_struct);
-    spikes_during_solo_x_pos = interp1(bsp_data(tag_i).ts ,bsp_data(tag_i).pos(:,1),spikes_during_solo_ts_usec);
-    spikes_during_solo_y_pos = interp1(bsp_data(tag_i).ts ,bsp_data(tag_i).pos(:,2),spikes_during_solo_ts_usec);
+    spikes_during_solo_x_pos = interp1(bsp_proc_data(tag_i).ts ,bsp_proc_data(tag_i).pos(:,1),spikes_during_solo_ts_usec);
+    spikes_during_solo_y_pos = interp1(bsp_proc_data(tag_i).ts ,bsp_proc_data(tag_i).pos(:,2),spikes_during_solo_ts_usec);
     
     % create a matrix from the data, such as each row is one flight
     new_flight_dis_criteria = dis_criteria(ii_dir);

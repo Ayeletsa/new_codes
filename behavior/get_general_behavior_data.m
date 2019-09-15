@@ -70,4 +70,6 @@ distnace_other_from_self_shifted_minusFE=[distnace_other_from_self_FE; 0];
 
 distance_change_sign=FE_ind(find(sign(distnace_other_from_self_shifted_minusFE.*distnace_other_from_self_shifted_plusFE)==-1)-1);
 
+%save_data
 save(general_behavior_data_file_name)
+
