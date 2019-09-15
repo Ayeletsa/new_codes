@@ -79,11 +79,17 @@ behav_modes_plot(behav).name='UT';
 %% plot 1: behavior modes over time
 plot_behavior_and_correct_modes(behav_modes_plot,behavioral_modes,bsp_proc_data,tag_i,bat,day,behave_analysis_fig_dir_out,behav_params_file_name,dir_param_file_name,general_behavior_data_file_name,behave_day_struct_folder)
 
-%% Plot 2: behavioral measurments:
-plot_basic_behav_analysis(behavioral_modes,general_behavior_data_file_name,bat,day)
-
 %% save struct:
 
 file_name=fullfile(behave_day_struct_folder,['behavioral_modes_bat_',num2str(bat),'_day_',num2str(day),'.mat']);
 save(file_name,'behavioral_modes')
+
+
+%% Plot 2: behavioral measurments:
+plot_basic_behav_analysis(behavioral_modes,general_behavior_data_file_name,bat,day,behav_params_file_name,behave_analysis_fig_dir_out)
+
+
+
+
+
 

@@ -2,7 +2,7 @@ function co_shuffling_new(co_shuffle_param_file_name)
 
 load(co_shuffle_param_file_name)
 
-files = dir(behave_cell_struct_folder);
+files = dir(cell_co_solo_initial_analysis_struct_folder);
 behavior_struct_names = {files.name};
 %% for each cell
 

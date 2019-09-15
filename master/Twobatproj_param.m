@@ -1,20 +1,31 @@
 function Twobatproj_param(param_folder)
 
 %% folders:
-main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
+% data input:
 params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
-params.dirs.behave_analysis_fig_dir_out=[main_analysis_dir,'initial_behavior_analysis\'];
-params.dirs.behave_day_struct_folder=[main_analysis_dir,'\behavioral_modes\day_structs\'];
-params.dirs.ball_position_folder=[main_analysis_dir,'\behavioral_modes\ball_pos\'];
-params.dirs.behave_cell_struct_folder=[main_analysis_dir,'\behavioral_modes\cell_structs\'];
-params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\co_shuffling_struct'];
-params.dirs.co_fig_folder_name=[main_analysis_dir,'basic_co_analysis'];
+
+% data output:
+main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
+params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
+params.dirs.ball_position_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\ball_pos\'];
+params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\co_solo_initial_analysis\'];
+params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\analysis_structs\co_shuffling_struct'];
+% figures:
+params.dirs.behave_analysis_fig_dir_out=[main_analysis_dir,'figures\initial_behavior_analysis\'];
+params.dirs.co_fig_folder_name=[main_analysis_dir,'figures\basic_co_analysis'];
+
 %save
 dir_params=params.dirs;
 param_file_name=fullfile(param_folder,'dirs_params.mat');
 save(param_file_name, '-struct', 'dir_params')
 
-
+% create folders if does not exist
+dirs=fieldnames(params.dirs);
+for dir_i=1:length(dirs)
+  if ~exist(params.dirs.(dirs{dir_i}))
+      mkdir(params.dirs.(dirs{dir_i}));
+  end
+end
 %% parameters for find_flight_ind
 params.behav.min_velocity_flight=2; % define flight by velocity (m/sec)
 params.behav.dist_from_the_ball=3;
@@ -46,6 +57,8 @@ params.behav.UT_window=params.behav.frame_per_second;
 params.behav.UT_time_from_CO=2*params.behav.frame_per_second;% 1sec
 params.behav.UT_distance_from_CO=10; %m
 params.behav.bins_to_remove_from_edge_CO_hist=1;
+params.behav.manual_min_dis_from_CO=100; %for manual correction check that the CO is close
+params.behav.frame_per_second=100;
 
 
 %save
@@ -106,6 +119,7 @@ params.co.time_spent_minimum_for_1D_bins_per_field=0.1;
 params.co.frames_per_second=100;
 params.co.num_shuffles_per_field=1000;
 params.co.alpha_val=5;
+params.co.manual_min_dis_from_CO=100; %for manual correction check that the CO is close
 % a. relative time to co
 params.co.time_before_after_co=params.behav.time_before_after_co;
 params.co.dis_before_after_co=params.behav.dis_before_after_co;
@@ -202,7 +216,7 @@ params.co_shuffle.co_shuffle_folder_name = params.dirs.co_shuffle_folder_name;
 params.co_shuffle.n_shuffles =1000;
 params.co_shuffle.n_shuffles = params.co_shuffle.n_shuffles+1;
 params.co_shuffle.ego_shuffle = 1; % shuffle egocentric distances, not only allocentric position
-params.co_shuffle.behave_cell_struct_folder = params.dirs.behave_cell_struct_folder;
+params.co_shuffle.cell_co_solo_initial_analysis_struct_folder = params.dirs.cell_co_solo_initial_analysis_struct_folder;
 
 %save
 co_shuffle_params=params.co_shuffle;

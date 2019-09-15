@@ -10,9 +10,9 @@ dir_param_file_name=fullfile(param_folder,'dirs_params.mat');
 solo_param_file_name=fullfile(param_folder,'solo_params.mat');
 co_param_file_name=fullfile(param_folder,'co_params.mat');
 
-create_behavior_structs(behav_param_file_name,dir_param_file_name)
+create_behavior_and_spikes_structs(behav_param_file_name,dir_param_file_name,solo_param_file_name,co_param_file_name)
 %% 2. initial co and solo anlysis
-initial_co_solo_analysis(behav_param_file_name,dir_param_file_name,solo_param_file_name,co_param_file_name)
+initial_co_solo_analysis(behav_param_file_name,dir_param_file_name)
 %% 2. CO shuffling
 co_shuffle_param_file_name=fullfile(param_folder,'co_shuffle_params.mat');
 
