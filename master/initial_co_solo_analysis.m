@@ -32,8 +32,8 @@ for ii_cell = 3:length(data_dir_info)
     cell_co_solo_initial_analysis.exp_data.bat = bat;
     cell_co_solo_initial_analysis.exp_data.day = day;
     cell_co_solo_initial_analysis.exp_data.cell_num = cell_struct.cell_info.cell_num  ;
-    [cell_co_solo_initial_analysis.exp_data.stability, cell_co_solo_initial_analysis.exp_data.mean_fr] = stability_index(cell_struct);
-    
+    [cell_co_solo_initial_analysis.exp_data.stability, cell_co_solo_initial_analysis.exp_data.mean_fr,cell_co_solo_initial_analysis.exp_data.n_spike_per_session] = stability_index(cell_struct);
+    cell_co_solo_initial_analysis.exp_data.spikes_ts_usec=cell_struct.spikes.spikes_ts_usec;
     % analyze each behavior separately
     cell_co_solo_initial_analysis.solo = spike_struct_solo_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name);
     cell_co_solo_initial_analysis.co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i, cell_co_solo_initial_analysis.solo,co_param_file_name);
@@ -43,6 +43,6 @@ for ii_cell = 3:length(data_dir_info)
     file_name = [cell_co_solo_initial_analysis_struct_folder,'\bat',num2str(bat),'_day_',num2str(day),'_cell_', num2str(cell_struct.cell_info.cell_num),'.mat'];
     
     save(file_name,'cell_co_solo_initial_analysis')
-    clear behavior_struct
+    clear behavior_struct cell_co_solo_initial_analysis
     
 end

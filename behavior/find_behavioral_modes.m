@@ -77,7 +77,7 @@ behav_modes_plot(behav).name='UT';
 [~,behav_modes_plot(behav).start,behav_modes_plot(behav).end]=find_length_of_consecutive_ind(UT_ind,length(pos_self_x));
 
 %% plot 1: behavior modes over time
-plot_behavior_and_correct_modes(behav_modes_plot,behavioral_modes,bsp_proc_data,tag_i,bat,day,behave_analysis_fig_dir_out,behav_params_file_name,dir_param_file_name,general_behavior_data_file_name,behave_day_struct_folder)
+behavioral_modes=plot_behavior_and_correct_modes(behav_modes_plot,behavioral_modes,bsp_proc_data,tag_i,bat,day,behave_analysis_fig_dir_out,behav_params_file_name,dir_param_file_name,general_behavior_data_file_name,behave_day_struct_folder)
 
 %% save struct:
 

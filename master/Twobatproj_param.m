@@ -2,7 +2,7 @@ function Twobatproj_param(param_folder)
 
 %% folders:
 % data input:
-params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
+params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
 
 % data output:
 main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
@@ -13,12 +13,7 @@ params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\analysis_structs\co_sh
 % figures:
 params.dirs.behave_analysis_fig_dir_out=[main_analysis_dir,'figures\initial_behavior_analysis\'];
 params.dirs.co_fig_folder_name=[main_analysis_dir,'figures\basic_co_analysis'];
-
-%save
-dir_params=params.dirs;
-param_file_name=fullfile(param_folder,'dirs_params.mat');
-save(param_file_name, '-struct', 'dir_params')
-
+params.dirs.co_signif_cells_fig_folder_name=[params.dirs.co_fig_folder_name,'signif_cells\'];
 % create folders if does not exist
 dirs=fieldnames(params.dirs);
 for dir_i=1:length(dirs)
@@ -26,6 +21,15 @@ for dir_i=1:length(dirs)
       mkdir(params.dirs.(dirs{dir_i}));
   end
 end
+
+if ~exist(param_folder)
+    mkdir(param_folder)
+end
+%save
+dir_params=params.dirs;
+param_file_name=fullfile(param_folder,'dirs_params.mat');
+save(param_file_name, '-struct', 'dir_params')
+
 %% parameters for find_flight_ind
 params.behav.min_velocity_flight=2; % define flight by velocity (m/sec)
 params.behav.dist_from_the_ball=3;
@@ -70,7 +74,7 @@ save(param_file_name, '-struct', 'behav_params')
 %parameters for Tuning curve calculation
 
 params.solo.solo_X_min= 0;
-params.solo.solo_X_max= 130;
+params.solo.solo_X_max= 135;
 params.solo.solo_X_n_bins = params.solo.solo_X_max * 2;
 params.solo.solo_X_bin_size = (params.solo.solo_X_max-params.solo.solo_X_min)/params.solo.solo_X_n_bins;
 params.solo.solo_X_bins_vector=params.solo.solo_X_min:params.solo.solo_X_bin_size:params.solo.solo_X_max;
@@ -140,7 +144,7 @@ params.co.dis_X_bins_vector_of_centers=params.co.dis_X_bins_vector(1:end-1)+para
 
 %c. allocentric during CO
 params.co.allo_X_min= 0;
-params.co.allo_X_max= 130;
+params.co.allo_X_max= 135;
 params.co.allo_X_n_bins = params.co.allo_X_max * 2;
 params.co.allo_X_bin_size = (params.co.allo_X_max-params.co.allo_X_min)/params.co.allo_X_n_bins;
 params.co.allo_X_bins_vector=params.co.allo_X_min:params.co.allo_X_bin_size:params.co.allo_X_max;
@@ -160,7 +164,7 @@ params.co.legalize_by_neighbor_bins_flag=1;
 
 % params
 params.co.n_time_spent_bins = 8;
-params.co. tunnel_end = 130;
+params.co. tunnel_end = 135;
 params.co.time_spent_criteria = params.co.time_spent_minimum_for_1D_bins/2;
 
 % ego and allo bins edges
@@ -201,7 +205,7 @@ params.co_shuffle.coherence_X_bins_vector=params.co_shuffle.coherence_X_min:para
 params.co_shuffle.coherence_X_bins_vector_of_centers=params.co_shuffle.coherence_X_bins_vector(1:end-1)+params.co_shuffle.coherence_X_bin_size/2;
 
 % d. allocentric parameters
-params.co_shuffle.tunnel_limits = [0 130];
+params.co_shuffle.tunnel_limits = [0 135];
 params.co_shuffle.pos_X_min = params.co_shuffle.tunnel_limits(1);
 params.co_shuffle.pos_X_max = params.co_shuffle.tunnel_limits(2);
 params.co_shuffle.pos_n_bins = 240;
@@ -222,4 +226,20 @@ params.co_shuffle.cell_co_solo_initial_analysis_struct_folder = params.dirs.cell
 co_shuffle_params=params.co_shuffle;
 param_file_name=fullfile(param_folder,'co_shuffle_params.mat');
 save(param_file_name, '-struct', 'co_shuffle_params')
+
+
+%% CO population params:
+
+params.co_population.min_spikes = 30;
+params.co_population.min_ego_inf = 0.1;
+params.co_population.min_even_odd = 0.2;
+params.co_population.alpha = .05;
+params.co_population.interneuron_firing_rate = 10;
+params.co_population.max_for_pyramidal=5;
+%save
+co_population_params=params.co_population;
+param_file_name=fullfile(param_folder,'co_population_params.mat');
+save(param_file_name, '-struct', 'co_population_params')
+
+
 
