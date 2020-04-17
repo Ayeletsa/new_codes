@@ -1,29 +1,43 @@
 function  co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name)
- load(co_param_file_name)
-  us_factor=1e6;
+load(co_param_file_name)
+us_factor=1e6;
 %% create vectors of variables
 
+
+% both bats are flying:
+FE_self=bsp_proc_data(tag_i).flight_ind;
+FE_other=bsp_proc_data(3-tag_i).flight_ind;
+ind_both_bats_flying=intersect(FE_self,FE_other);
+% find ind that bats are flying in different directions
+temp_bsp_x_pos = bsp_proc_data(tag_i).pos(ind_both_bats_flying,1)';
+temp_bsp_other_x_pos = bsp_proc_data(3-tag_i).pos(ind_both_bats_flying,1)';
+dir_flight=sign(diff(temp_bsp_x_pos));
+dir_flight_other=sign(diff(temp_bsp_other_x_pos));
+ind_different_direction=find((dir_flight-dir_flight_other)~=0)+1;
+ind_both_bats_flying_different_dirs=ind_both_bats_flying(ind_different_direction);
 % a. time stamps
-bsp_ts = bsp_proc_data(tag_i).ts;
+bsp_ts = bsp_proc_data(tag_i).ts(ind_both_bats_flying_different_dirs);
 spikes_ts = cell_struct.spikes.spikes_ts_usec;
 
 % b. x position
-bsp_x_pos = bsp_proc_data(tag_i).pos(:,1)';
-spikes_x_pos = interp1(bsp_proc_data(tag_i).ts , bsp_proc_data(tag_i).pos(:,1),spikes_ts);
+bsp_x_pos = bsp_proc_data(tag_i).pos(ind_both_bats_flying_different_dirs,1)';
+other_bat_x_pos=bsp_proc_data(3-tag_i).pos(ind_both_bats_flying_different_dirs,1);
+%spikes_x_pos = interp1(bsp_proc_data(tag_i).ts(ind_both_bats_flying_different_dirs) , bsp_proc_data(tag_i).pos(ind_both_bats_flying_different_dirs,1),spikes_ts);
+
 
 % relative distance from the other bat
-bsp_dis_m = bsp_x_pos - bsp_proc_data(3-tag_i).pos(:,1)';
-other_bat_pos_at_spikes = interp1(bsp_proc_data(3-tag_i).ts , bsp_proc_data(3-tag_i).pos(:,1),spikes_ts);
-spikes_dis_m = spikes_x_pos - other_bat_pos_at_spikes;
+bsp_dis_m = bsp_proc_data(tag_i).pos(ind_both_bats_flying_different_dirs,1)' - bsp_proc_data(3-tag_i).pos(ind_both_bats_flying_different_dirs,1)';
+%other_bat_pos_at_spikes = interp1(bsp_proc_data(3-tag_i).ts(ind_both_bats_flying_different_dirs) , bsp_proc_data(3-tag_i).pos(ind_both_bats_flying_different_dirs,1),spikes_ts);
+%spikes_dis_m = spikes_x_pos - other_bat_pos_at_spikes;
 
 % y position
-self_y_pos = bsp_proc_data(tag_i).pos(:,2)';
-spikes_y_pos = interp1(bsp_proc_data(tag_i).ts, self_y_pos,spikes_ts);
+self_y_pos = bsp_proc_data(tag_i).pos(ind_both_bats_flying_different_dirs,2)';
+%spikes_y_pos = interp1(bsp_proc_data(tag_i).ts(ind_both_bats_flying_different_dirs), self_y_pos,spikes_ts);
 
 % y difference between bats
-other_y_pos = bsp_proc_data(3 - tag_i).pos(:,2)';
+other_y_pos = bsp_proc_data(3 - tag_i).pos(ind_both_bats_flying_different_dirs,2)';
 y_diff = self_y_pos - other_y_pos;
-spikes_y_diff = interp1(bsp_proc_data(tag_i).ts, y_diff,spikes_ts);
+%spikes_y_diff = interp1(bsp_proc_data(tag_i).ts(ind_both_bats_flying_different_dirs), y_diff,spikes_ts);
 
 % cross overs parameters
 co_x_positions = bsp_proc_data(tag_i).pos(behavioral_modes.CO_point,1);
@@ -61,12 +75,13 @@ for ii_dir = 1:2
         % find co time
         co_time_usec = co_times_usec(dir_ind(ii_co));
         
-        % find bsp samples within a window of -+time_before_after from CO
+        % find bsp samples within a smooth_window of -+time_before_after from CO
         % a. find samples index
         bsp_relative_times = bsp_ts - co_time_usec;
         bsp_time_criteria_ind = ( - time_before_after_co*us_factor < bsp_relative_times & bsp_relative_times < time_before_after_co*us_factor);
         bsp_dis_criteria_ind = ( abs(bsp_dis_m)<dis_before_after_co)';
         bsp_ind = bsp_time_criteria_ind & bsp_dis_criteria_ind;
+        
         % b. find samples values
         bsp_ts_usec{ii_co} =  bsp_ts(bsp_ind)';
         bsp_time_to_co{ii_co} = bsp_relative_times(bsp_ind)';
@@ -75,19 +90,20 @@ for ii_dir = 1:2
         bsp_y_pos_at_co{ii_co} =self_y_pos(bsp_ind);
         bsp_y_diff_co{ii_co} = y_diff(bsp_ind);
         
-        % find spikes within a window of -+time_before_after from CO
+        % find spikes within a smooth_window of -+time_before_after from CO
         % a. find spikes index
         spikes_relative_times = spikes_ts - co_time_usec;
-        spikes_time_criteria_ind = ( - time_before_after_co*us_factor < spikes_relative_times & spikes_relative_times < time_before_after_co*us_factor);
-        spikes_dis_criteria_ind = ( abs( spikes_dis_m)<dis_before_after_co);
-        spikes_ind = spikes_time_criteria_ind & spikes_dis_criteria_ind;
+        
+        spikes_ind = find(spikes_ts> bsp_ts_usec{ii_co}(1) & spikes_ts<bsp_ts_usec{ii_co}(end));
+        
+       
         % b. find spikes values
         spikes_ts_usec{ii_co} = spikes_ts(spikes_ind);
         spikes_time_to_co{ii_co} = spikes_relative_times(spikes_ind);
-        spikes_dis_m_at_co{ii_co} = spikes_dis_m(spikes_ind);
-        spikes_x_pos_at_co{ii_co} = spikes_x_pos(spikes_ind);
-        spikes_y_pos_at_co{ii_co} = spikes_y_pos(spikes_ind);
-        spikes_y_diff_co{ii_co} = spikes_y_diff(spikes_ind);
+        spikes_dis_m_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_dis_m_at_co{ii_co},spikes_ts_usec{ii_co});
+        spikes_x_pos_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_x_pos_at_co{ii_co},spikes_ts_usec{ii_co});
+        spikes_y_pos_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_y_pos_at_co{ii_co},spikes_ts_usec{ii_co});
+        spikes_y_diff_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_y_diff_co{ii_co},spikes_ts_usec{ii_co});
         
         % if direction is negative, flip relative positions so negative locations will represent positions before the CO
         if ii_dir == 2
@@ -169,7 +185,7 @@ for ii_dir = 1:2
     % the 2 dimentional ego*allo plot is divided into 8 by 8 matrix, and time spent in each bin is measured.
     % This is in order to quantify the 2d coverage
     
-   
+    
     time_spent_ind = zeros(1,n_time_spent_bins^2);
     
     for ii_ego = 1:n_time_spent_bins
@@ -265,8 +281,9 @@ for ii_dir = 1:2
         firing_rate.dis_bin_size{bin_dis_i,bin_allo_i}=dis_X_bin_size_2D(bin_dis_i);
         firing_rate.allo_X_bins_vector{bin_dis_i,bin_allo_i}=allo_X_min:allo_X_bin_size_2D(bin_allo_i):allo_X_max;
         firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}=firing_rate.allo_X_bins_vector{bin_dis_i,bin_allo_i}(1:end-1)+allo_X_bin_size_2D(bin_allo_i)/2;
-        firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i}=dis_X_min:dis_X_bin_size_2D(bin_dis_i):dis_X_max;
-        firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}=firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i}(1:end-1)+dis_X_bin_size_2D(bin_dis_i)/2;
+        firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i}=linspace(dis_X_min,dis_X_max,27);
+        dis_X_bin_size_2D=min(diff(firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i}));
+        firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}=firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i}(1:end-1)+dis_X_bin_size_2D/2;
         
         %data:
         bsp_vec_allo = bsp.x_pos(isfinite(bsp.x_pos));
@@ -277,7 +294,8 @@ for ii_dir = 1:2
         [~, ~, firing_rate.field_density_smoothed_XY_with_NaN{bin_dis_i,bin_allo_i}, ~, ~, ~, ~, ~, ~, ~] ...
             = fn_compute_generic_2D_field ...
             (firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i}, firing_rate.allo_X_bins_vector{bin_dis_i,bin_allo_i}, bsp_vec_dis, bsp_vec_allo, spikes_vec_dis, spikes_vec_allo, time_spent_minimum_for_2D_bins, frames_per_second, sigma_a, hsize, legalize_by_neighbor_bins_flag);
-        
+       
+      
         %allo for the 2D plot
         bsp_vec = bsp.x_pos(isfinite(bsp.x_pos));
         spikes_vec = spikes.x_pos(isfinite(spikes.x_pos));
@@ -324,22 +342,76 @@ for ii_dir = 1:2
             spikes_vec=spikes.dis_m(find(spikes.x_pos>field_edges(1,field_i) & spikes.x_pos<field_edges(2,field_i)));
             bsp_vec=bsp.dis_m(find(bsp.x_pos>field_edges(1,field_i) & bsp.x_pos<field_edges(2,field_i)));
             if isempty(spikes_vec)
-            firing_rate.dis_x_fr_per_field{field_i}=nan*ones(1,length(firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}));
-            firing_rate.information_per_spike_per_field{field_i}=nan;
-            
+                firing_rate.dis_x_fr_per_field{field_i}=nan*ones(1,length(firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}));
+                firing_rate.information_per_spike_per_field{field_i}=nan;
+                firing_rate.signif_field{field_i}=nan;
+                firing_rate.number_of_spikes_per_field{field_i}=0;
+                firing_rate.sparsity{field_i}=nan;
+                firing_rate.cv{field_i}=nan;
+                firing_rate.modulation_depth{field_i}=nan;
+                   firing_rate.time_signif_field_new_smooth{field_i}=nan;
+              firing_rate.time_fr_per_field_new_smooth_smooth_window{field_i}=nan;
+           
             else
+                %per field for distance:
+                old_smooth=0;
+                smooth_window_vec=[3,5,7];
+                smooth_type=1;
+                smooth_tol=1;
+                for wind_i=1:length(smooth_window_vec)
+                    smooth_window=smooth_window_vec(wind_i);
+                     [timespent_binned_new_smooth, ~, ~, dis_x_fr_per_field_new_smooth_smooth_window(wind_i,:), ~,~] ...
+                        = fn_compute_generic_1D_tuning_new_smooth_new_again ...
+                        (bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0,old_smooth,smooth_window,smooth_type,smooth_tol);
+                    [signif_field_new_smooth{wind_i}]=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth);
+                end
+              firing_rate.signif_field_new_smooth=signif_field_new_smooth;
+              firing_rate.dis_x_fr_per_field_new_smooth_smooth_window{field_i}=dis_x_fr_per_field_new_smooth_smooth_window;
+              
+              %
+                [timespent_binned, ~, ~, dis_x_fr_per_field, ~,~] ...
+                    = fn_compute_generic_1D_tuning_new_smooth ...
+                    (bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0);
+                [signif_field]=shuffling_per_field_analysis(bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val);
                 
-            [timespent_binned, ~, ~, dis_x_fr_per_field, ~,~] ...
-                = fn_compute_generic_1D_tuning_new_smooth ...
-                (bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0);
-            [signif_field]=shuffling_per_field_analysis(bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val);
-            
-            timespent_binned(find(isnan(dis_x_fr_per_field)))=nan;
-            [information_per_spike] = fn_compute_spatial_info (timespent_binned,dis_x_fr_per_field);
-            firing_rate.dis_x_fr_per_field{field_i}=dis_x_fr_per_field;
-            firing_rate.information_per_spike_per_field{field_i}=information_per_spike;
-            firing_rate.signif_field{field_i}=signif_field;
-            firing_rate.number_of_spikes_per_field{field_i}=length(spikes_vec);
+                timespent_binned(find(isnan(dis_x_fr_per_field)))=nan;
+                [information_per_spike] = fn_compute_spatial_info (timespent_binned,dis_x_fr_per_field);
+                firing_rate.dis_x_fr_per_field{field_i}=dis_x_fr_per_field;
+                firing_rate.information_per_spike_per_field{field_i}=information_per_spike;
+                firing_rate.signif_field{field_i}=signif_field;
+                firing_rate.number_of_spikes_per_field{field_i}=length(spikes_vec);
+                r=dis_x_fr_per_field;
+                firing_rate.sparsity{field_i}=(nanmean(r).^2)/nanmean(r.^2);
+                std_r=nanstd(r);
+                mean_r=nanmean(r);
+                firing_rate.cv{field_i}=std_r/mean_r;
+                firing_rate.modulation_depth{field_i}=(max(r)-min(r))./(max(r));
+                
+                %per field for time:
+                spikes_vec=spikes.time_to_co(find(spikes.x_pos>field_edges(1,field_i) & spikes.x_pos<field_edges(2,field_i)));
+                bsp_vec=bsp.time_to_co(find(bsp.x_pos>field_edges(1,field_i) & bsp.x_pos<field_edges(2,field_i)));
+                   smooth_window_vec=[3,5,7];
+                smooth_type=1;
+                smooth_tol=1;
+                for wind_i=1:length(smooth_window_vec)
+                    smooth_window=smooth_window_vec(wind_i);
+                     [timespent_binned_new_smooth, ~, ~, time_fr_per_field_new_smooth_smooth_window(wind_i,:), ~,~] ...
+                        = fn_compute_generic_1D_tuning_new_smooth_new_again ...
+                        (bsp_vec,spikes_vec,time_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0,old_smooth,smooth_window,smooth_type,smooth_tol);
+                    [time_signif_field_new_smooth{wind_i}]=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,time_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth);
+                    
+                end
+              firing_rate.time_signif_field_new_smooth{field_i}=time_signif_field_new_smooth;
+              firing_rate.time_fr_per_field_new_smooth_smooth_window{field_i}=time_fr_per_field_new_smooth_smooth_window;
+              
+%                 [time_timespent_binned, ~, ~, time_fr_per_field, ~,~] ...
+%                     = fn_compute_generic_1D_tuning_new_smooth ...
+%                     (bsp_vec,spikes_vec,time_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0);
+%                 [time_signif_field]=shuffling_per_field_analysis(bsp_vec,spikes_vec,time_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val);
+%                 [information_per_spike] = fn_compute_spatial_info (time_timespent_binned,time_fr_per_field);
+%                 firing_rate.time_x_fr_per_field{field_i}=time_fr_per_field;
+%                 firing_rate.time_signif_field{field_i}=time_signif_field;
+%                 firing_rate.time_information_per_spike_per_field{field_i}=information_per_spike;
             end
         end
     else
@@ -348,6 +420,71 @@ for ii_dir = 1:2
     
     %save all firing rates data into main struct
     co(ii_dir).firing_rate = firing_rate;
+    
+    %% Inter field analysis:
+    new_field_edges=[];
+    inter_field_edge=[];
+    if ~isempty(field_edges)
+        %1. enlarge field size by 50% to each side
+        field_sizes=solo_data(ii_dir).field_size;
+        new_field_edges(1,:)=field_edges(1,:)-0.5.*field_sizes;
+        new_field_edges(2,:)=field_edges(2,:)+0.5.*field_sizes;
+        %2. define interfield edges
+        inter_field_edge(1,:)=[0, new_field_edges(2,:)];
+        inter_field_edge(2,:)=[new_field_edges(1,:), tunnel_end];
+        %3. find if fields were merged
+        if size(inter_field_edge,2)>1
+            inter_field_edge=inter_field_edge(:,inter_field_edge(2,:)>inter_field_edge(1,:));
+        end
+        %4. run over inter field pos
+        if ~isempty(inter_field_edge)
+            inter_field_count=0;
+            for inter_field_i=1:size(inter_field_edge,2)
+                inter_field_count=inter_field_count+1;
+                spikes_vec=spikes.dis_m(find(spikes.x_pos>inter_field_edge(1,inter_field_i) & spikes.x_pos<inter_field_edge(2,inter_field_i)));
+                bsp_vec=bsp.dis_m(find(bsp.x_pos>inter_field_edge(1,inter_field_i) & bsp.x_pos<inter_field_edge(2,inter_field_i)));
+                
+                
+                if isempty(spikes_vec)
+                    
+                    inter_field_firing_rate.dis_x_fr_per_field{inter_field_count}=nan*ones(1,length(firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}));
+                    inter_field_firing_rate.information_per_spike_per_field{inter_field_count}=nan;
+                    inter_field_firing_rate.signif_field{inter_field_count}=nan;
+                    inter_field_firing_rate.number_of_spikes_per_field{inter_field_count}=0;
+                    inter_field_firing_rate.sparsity{inter_field_count}=nan;
+                    inter_field_firing_rate.cv{inter_field_count}=nan;
+                    inter_field_firing_rate.modulation_depth{inter_field_count}=nan;
+                else
+                    %per field for distance:
+                    [timespent_binned, ~, ~, dis_x_fr_per_field, ~,~] ...
+                        = fn_compute_generic_1D_tuning_new_smooth ...
+                        (bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0);
+                    [signif_field]=shuffling_per_field_analysis(bsp_vec,spikes_vec,firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val);
+                    
+                    timespent_binned(find(isnan(dis_x_fr_per_field)))=nan;
+                    [information_per_spike] = fn_compute_spatial_info (timespent_binned,dis_x_fr_per_field);
+                    inter_field_firing_rate.dis_x_fr_per_field{inter_field_count}=dis_x_fr_per_field;
+                    inter_field_firing_rate.information_per_spike_per_field{inter_field_count}=information_per_spike;
+                    inter_field_firing_rate.signif_field{inter_field_count}=signif_field;
+                    inter_field_firing_rate.number_of_spikes_per_field{inter_field_count}=length(spikes_vec);
+                    r=dis_x_fr_per_field;
+                    inter_field_firing_rate.sparsity{inter_field_count}=(nanmean(r).^2)/nanmean(r.^2);
+                    std_r=nanstd(r);
+                    mean_r=nanmean(r);
+                    inter_field_firing_rate.cv{inter_field_count}=std_r/mean_r;
+                    inter_field_firing_rate.modulation_depth{inter_field_count}=(max(r)-min(r))./(max(r));
+                end
+            end
+            %save all firing rates data into main struct
+            inter_field_firing_rate.inter_field_edge=inter_field_edge;
+            co(ii_dir).inter_field_firing_rate = inter_field_firing_rate;
+        else
+            co(ii_dir).inter_field_firing_rate.inter_field_edge =nan;
+        end
+    else
+        co(ii_dir).inter_field_firing_rate.inter_field_edge =nan;
+    end
+    
     %%  calculate significante diff between co and solo allocentric representation
     % as for the obstacle - divide the tunnel into bins and compare
     % population of firing rats between CO and Solo
@@ -423,5 +560,5 @@ for ii_dir = 1:2
     
     co(1).params = params;
     
-    
+    clear firing_rate
 end
