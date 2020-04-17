@@ -5,14 +5,13 @@ load(co_shuffle_param_file_name)
 files = dir(cell_co_solo_initial_analysis_struct_folder);
 behavior_struct_names = {files.name};
 %% for each cell
-
 for ii_cell = 3:length(behavior_struct_names)
     
     % load cell's egocentric struct
     struct_name = behavior_struct_names{ii_cell};
-    file_name = fullfile(behavior_structs_folder,struct_name);
-    behavior_struct=load(file_name);
-    behavior_struct=behavior_struct.behavior_struct;
+    file_name = fullfile(cell_co_solo_initial_analysis_struct_folder,struct_name);
+    load(file_name);
+    behavior_struct=cell_co_solo_initial_analysis;
     
     % save basic information about the cell
     shuffling_struct(1).info.bat = behavior_struct.exp_data.bat;
@@ -57,14 +56,14 @@ for ii_cell = 3:length(behavior_struct_names)
             bsp_dis_m_vec = behavior_struct.co(ii_dir).bsp.dis_m(:);
             bsp_dis_m_vec = bsp_dis_m_vec(~isnan(bsp_dis_m_vec));
             
-            [ego_time_spent_in_bins, ~, ~, ego_firing_rate_mat(ii_shuffle,:), ~,~] ...
+                [ego_time_spent_in_bins, ~, ~, ego_firing_rate_mat(ii_shuffle,:), ~,~] ...
                 = fn_compute_generic_1D_tuning_new_smooth ...
                 (bsp_dis_m_vec,spikes_dis_m_vec, dis_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-            
+          
             %  b.2.b. egocentric information =
             fr_nan_ind = isnan(ego_firing_rate_mat(ii_shuffle,:));
-            information_per_spike_ego_vec(ii_shuffle) = spikes_information (  ego_firing_rate_mat(ii_shuffle,~fr_nan_ind), ego_time_spent_in_bins(~fr_nan_ind));
-            
+          %  information_per_spike_ego_vec(ii_shuffle) = spikes_information (  ego_firing_rate_mat(ii_shuffle,~fr_nan_ind), ego_time_spent_in_bins(~fr_nan_ind));
+             information_per_spike_ego_vec(ii_shuffle) = fn_compute_spatial_info (ego_time_spent_in_bins,ego_firing_rate_mat(ii_shuffle,:));
             %  b.2.c. other egocentric parameters
             %%% when changin the code better to do everything here after
             %%% the loop!!!
