@@ -2,8 +2,8 @@ function Twobatproj_param(param_folder)
 
 %% folders:
 % data input:
-params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
-
+%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
+params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
 % data output:
 main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
 params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
@@ -42,7 +42,7 @@ params.behav.ball_2_area=[110 140];
 params.behav.landing_vel=0.2;%m/s
 params.behav.flight_upper_vel_thres=30; %m/s
 %% parametres for cross-overs analysis
-params.behav.time_before_after_co = 4.5; % in secs
+params.behav.time_before_after_co = 3; % in secs
 params.behav.dis_before_after_co = 40; % in meters
 
 %% parameters for behavioral modes
@@ -79,7 +79,7 @@ params.solo.solo_X_n_bins = params.solo.solo_X_max * 2;
 params.solo.solo_X_bin_size = (params.solo.solo_X_max-params.solo.solo_X_min)/params.solo.solo_X_n_bins;
 params.solo.solo_X_bins_vector=params.solo.solo_X_min:params.solo.solo_X_bin_size:params.solo.solo_X_max;
 params.solo.solo_X_bins_vector_of_centers=params.solo.solo_X_bins_vector(1:end-1)+params.solo.solo_X_bin_size/2;
-params.solo.solo_time_spent_minimum_for_1D_bins=0.1;
+params.solo.solo_time_spent_minimum_for_1D_bins=0.75;
 params.solo.frames_per_second=100;
 %
 % field_detection_bin_size = 0.5; %m
@@ -94,7 +94,7 @@ params.solo.field_detection_X_bins_vector=params.solo.solo_X_bins_vector;
 % 2. consecutive samples that have a time gap
 % can be done with closer attention...
 params.solo.dis_criteria = [20 20];
-params.solo.new_flight_time_criteria = 1e3;
+params.solo.new_flight_time_criteria = 1e5;
 
 % params for field detection code (find_fields_PSTH_Basic_withShuffle)
 params.solo.ref_height_for_overlap = 0.5;
@@ -102,7 +102,7 @@ params.solo.minPeakFR = 1; %Hz
 params.solo.min_spikes_perField = 10;
 params.solo.percentilesTH = 85; %the firing rate TH has to be higher than 85% of the bins.
 params.solo.stabilityTH = 0.15; % cell has to fire within the field (defind by the
-% ref_height_for_width) in at least 25% of flights.
+% ref_height_for_width) in at least 15% of flights.
 params.solo.num_of_flights_minimum = 5; % cell has to fire within the field (defind by the
 % ref_height_for_width) in at least 5 flights.
 params.solo.valley_2_fields_unite_TH = 1; %if the valley between two close fields does
@@ -116,6 +116,32 @@ solo_params=params.solo;
 param_file_name=fullfile(param_folder,'solo_params.mat');
 save(param_file_name, '-struct', 'solo_params')
 
+%% field detection params
+params.fields.bin_size = params.solo.solo_X_bin_size;
+params.fields.bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
+params.fields.ker_SD = 1.5;
+params.fields.min_time_spent_per_meter = params.solo.solo_time_spent_minimum_for_1D_bins;
+params.fields.ker_type = 'gaussian';
+params.fields.shuffles_num = 1000;
+params.fields.shuffles_max_shift = 30;
+
+params.fields.FR_thr = 1;
+params.fields.overlap_href = 0.5; % href=horizontal reference
+params.fields.width_href = 0.2;
+params.fields.width_prc = [5 95]; % TODO: consider chaning to 2.5-97.5 %
+params.fields.min_spikes = 10;
+params.fields.min_flights_with_spikes = 5;
+params.fields.min_flights_with_spikes_prc = 0.1;
+params.fields.local_shuffle.margin = 0.5; % relative to field width
+params.fields.local_shuffle.n_shuffles = 1000;
+params.fields.local_shuffle.max_shift = 30;
+params.fields.local_shuffle.signif_SI_prc = 95;
+params.fields.valid_speed_pos = [10 187.5];
+params.fields.parmaset=1;
+%save
+fields_params=params.fields;
+param_file_name=fullfile(param_folder,'fields_params.mat');
+save(param_file_name, '-struct', 'fields_params')
 
 %% parameters for CO analysis basic analysis
 params.co.time_spent_minimum_for_1D_bins=0.2;
@@ -127,8 +153,8 @@ params.co.manual_min_dis_from_CO=100; %for manual correction check that the CO i
 % a. relative time to co
 params.co.time_before_after_co=params.behav.time_before_after_co;
 params.co.dis_before_after_co=params.behav.dis_before_after_co;
-params.co.time_X_min= -params.co.time_before_after_co * 1e3;
-params.co.time_X_max=params.co.time_before_after_co * 1e3;
+params.co.time_X_min= -params.co.time_before_after_co * 1e6;
+params.co.time_X_max=params.co.time_before_after_co * 1e6;
 params.co.time_n_bins = 40;
 params.co.time_X_bin_size=(params.co.time_X_max - params.co.time_X_min)/params.co.time_n_bins;
 params.co.time_X_bins_vector=params.co.time_X_min:params.co.time_X_bin_size:params.co.time_X_max;
@@ -154,6 +180,8 @@ params.co.allo_X_bins_vector_of_centers=params.co.allo_X_bins_vector(1:end-1)+pa
 params.co.sig_bins_width = 3;
 params.co.min_flights_per_bin = 3;
 
+
+
 %e. 2D tuning distance vs allocentric (trying few different bin sizes)
 params.co.allo_X_bin_size_2D=3; %changded to 3 meter
 params.co.dis_X_bin_size_2D=3; %changded to 3 meter
@@ -172,7 +200,8 @@ params.co.ego_bins_width = params.co.dis_before_after_co*2/params.co.n_time_spen
 params.co.ego_bins_edges = -params.co.dis_before_after_co:params.co.ego_bins_width:params.co.dis_before_after_co;
 params.co.allo_bins_width = params.co.tunnel_end/params.co.n_time_spent_bins;
 params.co.allo_bins_edges = params.co.tunnel_end:-params.co.allo_bins_width:0;
-
+%per field
+params.co.width_at_heigth=50;%width of per field
 %save
 co_params=params.co;
 param_file_name=fullfile(param_folder,'co_params.mat');
