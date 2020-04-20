@@ -1,19 +1,22 @@
 function Twobatproj_param(param_folder)
 
 %% folders:
-% data input:
-%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
-params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
+load('local_computer_dirs')
 % data output:
-main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
-params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
-params.dirs.ball_position_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\ball_pos\'];
-params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\co_solo_initial_analysis\'];
-params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\analysis_structs\co_shuffling_struct'];
+params.dirs.behave_day_struct_folder=[main_analysis_dir,'analysis_structs\behavioral_modes\day_structs\'];
+params.dirs.ball_position_folder=[main_analysis_dir,'analysis_structs\behavioral_modes\ball_pos\'];
+params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'analysis_structs\co_solo_initial_analysis\'];
+params.dirs.co_shuffle_folder_name = [main_analysis_dir,'analysis_structs\co_shuffling_struct'];
+params.dirs.clicks_day_struct_folder = [main_analysis_dir,'analysis_structs\clicks_day\'];
+params.dirs.clicks_spikes_analysis_struct_folder = [main_analysis_dir,'analysis_structs\clicks_spikes_analysis\'];
+
 % figures:
 params.dirs.behave_analysis_fig_dir_out=[main_analysis_dir,'figures\initial_behavior_analysis\'];
-params.dirs.co_fig_folder_name=[main_analysis_dir,'figures\basic_co_analysis'];
+params.dirs.co_fig_folder_name=[main_analysis_dir,'figures\basic_co_analysis\'];
 params.dirs.co_signif_cells_fig_folder_name=[params.dirs.co_fig_folder_name,'signif_cells\'];
+params.dirs.click_rate_folder=[main_analysis_dir,'figures\click_rate\'];
+params.dirs.click_detection_folder=[main_analysis_dir,'figures\click_detection\'];
+
 % create folders if does not exist
 dirs=fieldnames(params.dirs);
 for dir_i=1:length(dirs)
@@ -270,5 +273,27 @@ co_population_params=params.co_population;
 param_file_name=fullfile(param_folder,'co_population_params.mat');
 save(param_file_name, '-struct', 'co_population_params')
 
+
+%% Audio params
+params.audio.filter_cutoff = 1e4;            %in Hz
+params.audio.filter_order = 300;
+params.audio.th = 50;                         %in SNR
+params.audio.max_intra_click_null = 2000;    %in usecs
+params.audio.min_cluster_size = 30;          %in usecs
+params.audio.max_cluster_size = 4000;        %in usecs
+params.audio.max_rise_time = 500;            %in usecs
+% params.audio.max_fall_time = 1500;           %in usecs
+% params.audio.fall_level_percent = 0.3;
+params.audio.min_intra_click_diff = 15*10^3; %in usecs
+params.audio.max_intra_click_diff = 30*10^3; %in usecs
+% params.audio.min_inter_click_diff = 50*10^3; %in usecs
+params.audio.speed_of_sound = 346.13*10^-6;    %in m/usecs
+params.audio.click_offset_window = [-3 1];      %in meters
+params.audio.click_offset_search_window = 1e3;  %in usecs
+
+%save
+audio_params=params.audio;
+param_file_name=fullfile(param_folder,'audio_params.mat');
+save(param_file_name, '-struct', 'audio_params')
 
 
