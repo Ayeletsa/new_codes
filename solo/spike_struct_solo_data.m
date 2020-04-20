@@ -125,10 +125,10 @@ for ii_dir = 1:2
 %         prm.fields=load(field_param_file_name);
         fields=detect_field_based_on_tamir(FR_map,FE,prm) ;
         if ~isempty(fields)
-        field_center=fields.loc;
-        field_size=fields.width_href;
-        field_height=fields.peak;
-        field_edges=fields.edges_href;
+        field_center=[fields.loc];
+        field_size=[fields.width_href];
+        field_height=[fields.peak];
+        field_edges=reshape([fields.edges_href],2,length([fields.edges_href])/2)';
         
         PSTH=FR_map.PSTH;
         field_height_norm_by_mean=field_height./nanmean(PSTH);
