@@ -3,6 +3,8 @@ function plot_co_main_cell_fig_time_per_field(dir_param_file_name,population_par
 load(dir_param_file_name)
 load(population_param_file_name)
 load(co_param_file_name)
+
+co_time_fig_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\figures\per_field_time_analysis\';
 %% structs' parameters
 
 files = dir(cell_co_solo_initial_analysis_struct_folder);
@@ -31,7 +33,7 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell = 162:length(behavior_struct_names)
+for ii_cell = 17:length(behavior_struct_names)
     ii_cell
     signif=0;
     %% load data
@@ -396,13 +398,22 @@ for ii_cell = 162:length(behavior_struct_names)
                                 axes('units','normalized','Position',[0.35+dir_adj y_pos 0.12 0.05]);
                                 if sum(~isnan(r))>=0.5*length(r)
                                     bins_center=time_X_bins_vector_of_centers;
+                                    bins=time_X_bins_vector;
                                     time_signif_field_new_smooth=behavior_struct.co(ii_dir).firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i};
                                     shuf_data=time_signif_field_new_smooth.shuffled_data  ;
                                     
                                     plot(bins_center,shuf_data,'color',spike_colors{3},'LineWidth',lwidth); hold on;
                                     plot(bins_center ,r,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                                    x_limits = [min(bins_center), max(bins_center)];
+                                    % plot solo vriability within field:
+                                    prc_5_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},5);
+                                    prc_95_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},95);
+                                    prc_50_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},50);
+                                    plot((max(bins)*1.05)*ones(1,2),[prc_5_solo,prc_95_solo],'ko')
+                                    plot((max(bins)*1.05)*ones(1,1),[prc_50_solo],'g.')
+
+                                    x_limits = [min(bins), max(bins)*1.2];
                                     max_y = round(max(max([r;shuf_data]))*1.1*10) / 10 +1;
+                                    max_y=max([max_y,prc_95_solo]);
                                     if max_y < 1
                                         max_y = 1;
                                     end
@@ -426,7 +437,8 @@ for ii_cell = 162:length(behavior_struct_names)
                                     end
                                     
                                     if count==1
-                                        set(gca,'xlim',x_limits,'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
+                                        set(gca,'xlim',x_limits,'XTick',(-3:1:3)*1e6,'XTickLabel',-3:1:3,'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
+                                        xlabel('Time to CO (s)')
                                     else
                                         set(gca,'xlim',x_limits,'XTick',[],'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
                                         
@@ -464,20 +476,20 @@ for ii_cell = 162:length(behavior_struct_names)
                 
                 fig = gcf;
                 fig.InvertHardcopy = 'off';
-                if ~exist(co_fig_folder_name)
-                    mkdir(co_fig_folder_name)
+                if ~exist(co_time_fig_folder_name)
+                    mkdir(co_time_fig_folder_name)
                 end
-                fig_name=fullfile(co_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
+                fig_name=fullfile(co_time_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
                 saveas(gcf,fig_name)
                 
             end
             
-            %% for CO signif cells save also in relevant dir:
-            if signif==1
-                fig_name=fullfile(co_signif_cells_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
-                saveas(gcf,fig_name)
-            end
-            clf(gcf)
+%             %% for CO signif cells save also in relevant dir:
+%             if signif==1
+%                 fig_name=fullfile(co_signif_cells_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
+%                 saveas(gcf,fig_name)
+%             end
+             clf(gcf)
             
         else
             continue
