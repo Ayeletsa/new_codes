@@ -16,6 +16,12 @@ general_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_s
 dir_info=dir(data_folder_name);
 behavior_struct_names = {dir_info.name};
 
+SI_threshold=1;
+%% params for valid cells during CO
+param_folder='D:\Ayelet\2bat_proj\Analysis\new_code\params\';
+param_file_name=fullfile(param_folder,'co_population_params.mat');
+load(param_file_name)
+
 for cell_i=3:length(behavior_struct_names)
     %load data of first kernel
     %% load data
@@ -28,6 +34,14 @@ for cell_i=3:length(behavior_struct_names)
     day=behavior_struct.exp_data.day;
     cell_num=behavior_struct.exp_data.cell_num;
     
+    % check if include cell:
+    a=max([behavior_struct.solo.SI])>SI_threshold;
+    b=(sum(~isnan(cell_co_solo_initial_analysis.solo(1).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(1).spikes.ts_usec(:))))>min_n_spike;
+    c=(sum(~isnan(cell_co_solo_initial_analysis.solo(2).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(2).spikes.ts_usec(:))))>min_n_spike;
+    d=b | c;
+    e=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
+    cond_vec=[a,d,e];
+    if sum(cond_vec)==length(cond_vec)
     
     %figure title
     % write cell's ID
@@ -61,6 +75,7 @@ for cell_i=3:length(behavior_struct_names)
     figure_name = [figure_output_folder,'\solo_params_bat',num2str(bat),'_day_',num2str(day),'_cell_', num2str(cell_num),'.jpg'];
     saveas(gcf,figure_name)
     clf
+    end
 end
 %%
 function plot_solo_rater(raster_pos,raster_ts,time_limits,bins,PSTH,fields_height,fields_center,plot_pos_1,plot_pos_2,title_str)
