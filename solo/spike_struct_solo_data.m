@@ -146,6 +146,7 @@ for ii_dir = 1:2
    %[field_center,field_size,field_height,field_edges,PSTH] = find_fields_PSTH_Basic_withShuffle(flights_struct,solo_param_file_name);
    %field_height_norm_by_mean=field_height./nanmean(PSTH);
     else
+        fields=[];
         field_center=[];
         field_size=[];
         field_height=[];
@@ -170,6 +171,7 @@ for ii_dir = 1:2
     solo(ii_dir).field_edges=field_edges';
     solo(ii_dir).PSTH_for_field_detection=FE_PSTH.PSTH;
     solo(ii_dir).SI=information_per_spike;
+    solo(ii_dir).fields=fields;
    % solo(ii_dir).vel_firing_rate=vel_firing_rate;
 end
 
