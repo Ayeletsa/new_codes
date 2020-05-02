@@ -2,21 +2,24 @@
 %function to plot somt of the solo params
 %1. check different kernel sizes:
 k_sizes=[0.5,1,1.5];
+th_vec=[0.5,1];
 %% figure prop:
 figure('units','normalized','outerposition',[0 0 1 1])
-x_pos=[0.05 0.55];
+x_pos=[0.05 0.3];
 y_pos=[0.05 0.35 0.65];
-raster_size=[0.2 0.15];
-PSTH_size=[0.2 0.08];
+raster_size=[0.19 0.15];
+PSTH_size=[0.19 0.08];
 fsize=10;
+dir_pos=[0, 0.5];
 %%
 figure_output_folder='D:\Ayelet\2bat_proj\Analysis\new_code\figures\test_solo_params\';
-data_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_0.5\';
+data_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_0.5_th_0.5\';
 general_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_';
 dir_info=dir(data_folder_name);
 behavior_struct_names = {dir_info.name};
 
 SI_threshold=1;
+min_n_spike=100;
 %% params for valid cells during CO
 param_folder='D:\Ayelet\2bat_proj\Analysis\new_code\params\';
 param_file_name=fullfile(param_folder,'co_population_params.mat');
@@ -42,47 +45,61 @@ for cell_i=3:length(behavior_struct_names)
     e=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
     cond_vec=[a,d,e];
     if sum(cond_vec)==length(cond_vec)
-    
-    %figure title
-    % write cell's ID
-    str = sprintf('Cell #%d, Date: %d, Bat %d',cell_num,day,bat) ;
-    annotation('textbox',[.06 .88 .3 .1],'string',str,'EdgeColor','none','fontsize',15)
-    for ii=1:length(k_sizes)
-            for ii_dir=1:2
-
-        % load data
-        if ii~=1
-            k_folder_name=[general_folder_name,num2str(k_sizes(ii)),'\'];
-            file_name = [k_folder_name,'\bat',num2str(bat),'_day_',num2str(day),'_cell_', num2str(cell_num),'.mat'];
-            load(file_name);
-            behavior_struct=cell_co_solo_initial_analysis;
-            
+        
+        %figure title
+        % write cell's ID
+        str = sprintf('Cell #%d, Date: %d, Bat %d',cell_num,day,bat) ;
+        annotation('textbox',[.06 .88 .3 .1],'string',str,'EdgeColor','none','fontsize',15)
+        for ii=1:length(k_sizes)
+            for th_i=1:2
+                th=th_vec(th_i);
+                for ii_dir=1:2
+                    
+                    % load data
+                    if ii~=1
+                        k_folder_name=[general_folder_name,num2str(k_sizes(ii)),'_th_',num2str(th),'\'];
+                        file_name = [k_folder_name,'\bat',num2str(bat),'_day_',num2str(day),'_cell_', num2str(cell_num),'.mat'];
+                        load(file_name);
+                        behavior_struct=cell_co_solo_initial_analysis;
+                        
+                    end
+                    raster_spike_pos=behavior_struct.solo(ii_dir).spikes.x_pos(:);
+                    raster_spike_ts=behavior_struct.solo(ii_dir).spikes.ts_usec(:);
+                    raster_bsp_pos=behavior_struct.solo(ii_dir).bsp.x_pos(:);
+                    raster_bsp_ts=behavior_struct.solo(ii_dir).bsp.ts_usec(:);
+                    time_limits = [min(behavior_struct.solo(ii_dir).bsp.ts_usec(:)) max(behavior_struct.solo(ii_dir).bsp.ts_usec(:))];
+                    bins=behavior_struct.solo(1).x_pos_firing_rate{1, 2};
+                    PSTH=behavior_struct.solo(ii_dir).PSTH_for_field_detection;
+                    fields_height=behavior_struct.solo(ii_dir).field_height;
+                    fields_center=behavior_struct.solo(ii_dir).field_center;
+                    if length(behavior_struct.solo(ii_dir).fields)==0
+                        fields_edges=[];
+                        FE_field_pass_num=[];
+                        num_flights_with_spikes=[];
+                    else
+                        fields_edges=[reshape([behavior_struct.solo(ii_dir).fields.edges_prc],2,length([behavior_struct.solo(ii_dir).fields.edges_prc])/2)'];                    FE_field_pass_num=[behavior_struct.solo(ii_dir).fields.FE_field_pass_num];
+                        num_flights_with_spikes=[behavior_struct.solo(ii_dir).fields.num_flights_with_spikes];
+                    end
+                    plot_pos_1=[x_pos(th_i)+dir_pos(ii_dir), y_pos(ii),raster_size];
+                    plot_pos_2=[x_pos(th_i)+dir_pos(ii_dir), y_pos(ii)+raster_size(2),PSTH_size];
+                    title_str=sprintf('kernel=%.1f threshold=%.1f',k_sizes(ii),th_vec(th_i));
+                    plot_solo_rater(raster_spike_pos,raster_spike_ts,time_limits,bins,PSTH,fields_height,fields_center,plot_pos_1,plot_pos_2,title_str,fields_edges,FE_field_pass_num,num_flights_with_spikes,raster_bsp_pos,raster_bsp_ts)
+                end
+            end
         end
-        raster_pos=behavior_struct.solo(ii_dir).spikes.x_pos(:);
-        raster_ts=behavior_struct.solo(ii_dir).spikes.ts_usec(:);
-        time_limits = [min(behavior_struct.solo(ii_dir).bsp.ts_usec(:)) max(behavior_struct.solo(ii_dir).bsp.ts_usec(:))];
-        bins=behavior_struct.solo(1).x_pos_firing_rate{1, 2};
-        PSTH=behavior_struct.solo(ii_dir).PSTH_for_field_detection;
-        fields_height=behavior_struct.solo(ii_dir).field_height;
-        fields_center=behavior_struct.solo(ii_dir).field_center;
-        plot_pos_1=[x_pos(ii_dir), y_pos(ii),raster_size];
-        plot_pos_2=[x_pos(ii_dir), y_pos(ii)+raster_size(2),PSTH_size];
-        title_str=sprintf('kernel=%.1f',k_sizes(ii));
-        plot_solo_rater(raster_pos,raster_ts,time_limits,bins,PSTH,fields_height,fields_center,plot_pos_1,plot_pos_2,title_str)
-    end
-    end
-    % save figure
-    figure_name = [figure_output_folder,'\solo_params_bat',num2str(bat),'_day_',num2str(day),'_cell_', num2str(cell_num),'.jpg'];
-    saveas(gcf,figure_name)
-    clf
+        % save figure
+        figure_name = [figure_output_folder,'\solo_params_bat',num2str(bat),'_day_',num2str(day),'_cell_', num2str(cell_num),'.jpg'];
+        saveas(gcf,figure_name)
+        clf
     end
 end
 %%
-function plot_solo_rater(raster_pos,raster_ts,time_limits,bins,PSTH,fields_height,fields_center,plot_pos_1,plot_pos_2,title_str)
+function plot_solo_rater(raster_pos,raster_ts,time_limits,bins,PSTH,fields_height,fields_center,plot_pos_1,plot_pos_2,title_str,fields_edges,FE_field_pass_num,num_flights_with_spikes,raster_bsp_pos,raster_bsp_ts)
 tunnel_limits=[0 135];
 % raster of solo spikes
 axes('position',plot_pos_1)
 hold on
+plot(raster_bsp_pos,raster_bsp_ts,'.','color',[.8 .8 .8],'markersize',2)
 plot(raster_pos,raster_ts,'.','color','k','markersize',8)
 time_labels=round(round(time_limits*1e-6*(1/60)*10-time_limits(1)*1e-6*(1/60)*10)/10);
 set(gca,'ylim',time_limits,'ytick',time_limits,'yticklabel',time_labels,'xlim',tunnel_limits,'xtick',tunnel_limits)
@@ -94,7 +111,13 @@ axes('position',plot_pos_2)
 hold on
 plot(bins ,PSTH  ,'color','k','LineWidth',2);
 plot(fields_center,fields_height,'*r')
-max_x = 1.1*ceil(max(PSTH));
+
+max_x = 1.5*ceil(max(PSTH));
+for field_i=1:length(FE_field_pass_num)
+    plot(fields_edges(field_i,:),(fields_height(field_i)/2)*ones(1,2),'color',[.5 .5 .5])
+    text(mean(fields_edges(field_i)),(fields_height(field_i))*1.5,sprintf('%d/%d',num_flights_with_spikes(field_i),FE_field_pass_num(field_i)),'HorizontalAlignment','center')
+end
+max_x=max_x+1;
 if max_x~=0 & ~isnan(max_x)
     set(gca,'xlim',tunnel_limits,'XTick',[],'ylim',[0 max_x],'ytick',max_x);
 end
