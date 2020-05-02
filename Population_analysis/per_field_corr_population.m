@@ -1,7 +1,7 @@
 % population per field
 clear
 % parameters:
-dir_data='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis\';
+dir_data='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_1.5_th_1\';
 dir_info=dir(dir_data);
 
 co_shuffle_structs_folder = 'D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_shuffling_struct\';
@@ -9,8 +9,9 @@ figure_folder='D:\Ayelet\2bat_proj\Analysis\new_code\figures\population\';
 %
 min_n_spike=100;
 SI_threshold=1;
-min_dis_pos_neg=0.3*1e6;%us
+min_dis_pos_neg=0.25*1e6;%us
 min_n_spike_per_field=50;
+min_r_length_per_field=0.5; %min length of non nan firing rate in per field
 per_field_tuning_curve_all_cells=[];
 cell_count=0;
 sig_bin_count=0;
@@ -25,9 +26,9 @@ per_field_signif=[];
 n_smooth=3;
 all_pos_width=cell(n_smooth,1);
 all_neg_width=cell(n_smooth,1);
-all_combine_width=cell(n_smooth,1);
-all_comb_pos_width=cell(n_smooth,1);
-all_comb_neg_width=cell(n_smooth,1);
+all_compound_width=cell(n_smooth,1);
+all_compound_pos_width=cell(n_smooth,1);
+all_compound_neg_width=cell(n_smooth,1);
 all_pos_rise_time=cell(n_smooth,1);
 all_neg_rise_time=cell(n_smooth,1);
 %% TO DO:
@@ -102,12 +103,17 @@ for cell_i=3:length({dir_info.name})-1
                     
                     
                     
-                    
+                    per_field_signif(cell_count)=0;% it will change if it will be true
                     for fr_i=1:length(firing_rate.time_signif_field_new_smooth)
-                        if iscell(firing_rate.time_signif_field_new_smooth{fr_i}) & firing_rate.number_of_spikes_per_field{fr_i}>min_n_spike_per_field  
+                        
+                        if iscell(firing_rate.time_signif_field_new_smooth{fr_i}) & firing_rate.number_of_spikes_per_field{fr_i}>min_n_spike_per_field
+                            
                             for smooth_i=1:n_smooth
+                                r=firing_rate.time_fr_per_field_new_smooth_smooth_window{fr_i}(smooth_i,:);
+                                non_nan_ind_r=find(~isnan(r));
+                                [ind_length,~,~]=find_length_of_consecutive_ind(non_nan_ind_r,length(r));
                                 
-                                if firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.signif_based_on_extreme_bins==1
+                                if firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.signif_based_on_extreme_bins==1 & ind_length>min_r_length_per_field*length(r)
                                     
                                     per_field_signif(cell_count)=1;
                                     neg_width=firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.width_neg_interp;
@@ -115,11 +121,14 @@ for cell_i=3:length({dir_info.name})-1
                                     pos_width=firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.width_pos_interp;
                                     pos_width(isnan(pos_width))=[];
                                     pos_rise_time=firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.pos_rise_time_interp;
+                                    pos_rise_time(isnan(pos_rise_time))=[];
                                     neg_rise_time=firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.neg_rise_time_interp;
+                                    neg_rise_time(isnan(neg_rise_time))=[];
+                                    
                                     comb_width=[];
                                     pos_comb=[];
                                     neg_comb=[];
-                                  
+                                    
                                     if ~isempty(pos_width) & ~isempty(neg_width) % if there are both positive and negative
                                         x_pos=firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.width_line_x_pos_interp;
                                         x_neg=firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i}.width_line_x_neg_interp;
@@ -127,7 +136,7 @@ for cell_i=3:length({dir_info.name})-1
                                         % check if there are clsoe to each
                                         % other:
                                         if abs(min(x_pos(:))-max(x_neg(:)))<=min_dis_pos_neg | abs(max(x_pos(:))-min(x_neg(:)))<=min_dis_pos_neg
-                                           %TO DO: to correct it to work
+                                            %TO DO: to correct it to work
                                             %properly on all type of tuning
                                             %curve if we will use it!
                                             comb_width=[max([x_pos(:);x_neg(:)])-min([x_pos(:);x_neg(:)])];
@@ -135,14 +144,15 @@ for cell_i=3:length({dir_info.name})-1
                                             neg_comb=neg_width;
                                             pos_width=[];
                                             neg_width=[];
-                                            
+                                            neg_rise_time=[];
+                                            pos_rise_time=[];
                                         end
                                     end
                                     all_pos_width{smooth_i}=[all_pos_width{smooth_i},pos_width];
                                     all_neg_width{smooth_i}=[all_neg_width{smooth_i},neg_width];
-                                    all_combine_width{smooth_i}=[all_combine_width{smooth_i},comb_width];
-                                    all_comb_pos_width{smooth_i}=[all_comb_pos_width{smooth_i},pos_comb];
-                                    all_comb_neg_width{smooth_i}=[all_comb_neg_width{smooth_i},neg_comb];
+                                    all_compound_width{smooth_i}=[all_compound_width{smooth_i},comb_width];
+                                    all_compound_pos_width{smooth_i}=[all_compound_pos_width{smooth_i},pos_comb];
+                                    all_compound_neg_width{smooth_i}=[all_compound_neg_width{smooth_i},neg_comb];
                                     all_pos_rise_time{smooth_i}=[all_pos_rise_time{smooth_i},pos_rise_time];
                                     all_neg_rise_time{smooth_i}=[all_neg_rise_time{smooth_i},neg_rise_time];
                                 end
@@ -266,46 +276,51 @@ saveas(gcf,file_name)
 %% Figure of per field tuning with
 figure('units','normalized','outerposition',[0 0 1 1])
 smooth_vec=[3,5,7];
-x_vec=(0:0.3:4);
+
 n_plots=7;
 for smooth_i=1:n_smooth
+    x_vec=(0:0.2:4);
+    xlimits=[0 4];
     smooth_wind=smooth_vec(smooth_i);
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+1)
     data=all_pos_width{smooth_i}./1e6;
     txt='Positive fields:';
-    hist_per_field(data,x_vec,txt,smooth_wind)
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+2)
     data=all_neg_width{smooth_i}./1e6;
     txt='Negative fields:';
-   hist_per_field(data,x_vec,txt,smooth_wind)
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+3)
-    data=all_combine_width{smooth_i}./1e6;
-    txt='Combined fields:';
-    hist_per_field(data,x_vec,txt,smooth_wind)
-
+    data=all_compound_width{smooth_i}./1e6;
+    txt='Compound fields:';
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
+    
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+4)
-    data=all_comb_pos_width{smooth_i}./1e6;
-    txt='Pos from combine:';
-    hist_per_field(data,x_vec,txt,smooth_wind)
+    data=all_compound_pos_width{smooth_i}./1e6;
+    txt='Pos from conpound:';
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+5)
-    data=all_comb_neg_width{smooth_i}./1e6;
-    txt='Neg from combine:';
-    hist_per_field(data,x_vec,txt,smooth_wind)
+    data=all_compound_neg_width{smooth_i}./1e6;
+    txt='Neg from compound:';
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
+    
+    x_vec=(0:0.1:2);
+    xlimits=[0 2];
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+6)
     data=all_pos_rise_time{smooth_i}./1e6;
     txt='Pos rise time:';
-    hist_per_field(data,x_vec,txt,smooth_wind)
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
     
     subplot(n_smooth,n_plots,n_plots*(smooth_i-1)+7)
     data=all_neg_rise_time{smooth_i}./1e6;
     txt='Neg rise time:';
-    hist_per_field(data,x_vec,txt,smooth_wind)
+    hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
     
 end
 
@@ -383,12 +398,14 @@ legend('shuffle','within a cell')
 title(sprintf('%s, p=%.2f', name,p))
 end
 
-function hist_per_field(data,x_vec,txt,smooth_wind)
-    [h,x]=hist(data,x_vec);
-    bar(x,h/sum(h))
-    xlabel('tuning width (s)')
-    ylabel('proportion')
-     mean_hist=nanmean(data);
-     median_hist=nanmedian(data);
-    title(sprintf('%s \nsmooth=%d \nmean=%.2f meadian=%.2f',txt,smooth_wind,mean_hist,median_hist))
+function hist_per_field(data,x_vec,txt,smooth_wind,xlimits)
+[h,x]=hist(data,x_vec);
+bar(x,h/sum(h))
+n_fields=length(data);
+xlabel('tuning width (s)')
+ylabel('proportion')
+mean_hist=nanmean(data);
+median_hist=nanmedian(data);
+title(sprintf('%s \nsmooth=%d #fields=%d\nmean=%.2f meadian=%.2f',txt,smooth_wind,n_fields,mean_hist,median_hist))
+xlim(xlimits)
 end
