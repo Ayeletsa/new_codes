@@ -2,6 +2,7 @@ function plot_co_main_cell_fig_inter_field(dir_param_file_name,population_param_
 % plot imporatnat statistics for cross-overs analysis
 load(dir_param_file_name)
 load(population_param_file_name)
+co_fig_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\figures\inter_field\';
 %% structs' parameters
 
 files = dir(cell_co_solo_initial_analysis_struct_folder);
@@ -30,7 +31,7 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell = 162:length(behavior_struct_names)
+for ii_cell = 4:length(behavior_struct_names)
     ii_cell
     signif=0;
     %% load data
