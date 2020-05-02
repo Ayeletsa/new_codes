@@ -2,6 +2,8 @@ function fields = fields_find_signif(FE, fields, prm)
 
 %%
 [fields(:).signif] = disperse( repelem(false,length(fields)) ); % pre-define field 'signif' to allow parfor
+[fields(:).field_SI] = disperse( repelem(false,length(fields)) ); % pre-define field 'signif' to allow parfor
+
 if length(fields)==0
     return;
 end
@@ -35,7 +37,7 @@ parfor ii_field = 1:length(fields)
                                               prm.fields.local_shuffle.max_shift,prm);
     SI_shuffle = [FE_PSTH_shuffle.FE_PSTH.SI_bits_spike];
     fields(ii_field).signif = FE_PSTH.SI_bits_spike > prctile(SI_shuffle,prm.fields.local_shuffle.signif_SI_prc);
-   
+   fields(ii_field).field_SI =FE_PSTH.SI_bits_spike;
 end
 % remove non-significant fields!
 fields(~[fields.signif])  = [];
