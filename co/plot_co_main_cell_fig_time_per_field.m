@@ -33,7 +33,7 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell = 17:length(behavior_struct_names)
+for ii_cell = 3:length(behavior_struct_names)
     ii_cell
     signif=0;
     %% load data
@@ -259,6 +259,14 @@ for ii_cell = 17:length(behavior_struct_names)
                     end
                     str = sprintf('Hz');
                     xlabel(str,'fontsize',fsize)
+                    %add fields details:
+                    for field_i=1:length(behavior_struct.solo(ii_dir).field_center)
+                        peak_fr=behavior_struct.solo(ii_dir).field_height(field_i);
+                        SI_field=behavior_struct.solo(ii_dir).fields(field_i).field_SI;
+                        perc_flight_with_spike=100*(behavior_struct.solo(ii_dir).fields(field_i).num_flights_with_spikes/behavior_struct.solo(ii_dir).fields(field_i).FE_field_pass_num);
+                        
+                        text((behavior_struct.solo(ii_dir).field_height(field_i))*1.05,behavior_struct.solo(ii_dir).field_center(field_i),sprintf('%.1f Hz, SI=%.1f, %.1f%%',peak_fr,SI_field,(perc_flight_with_spike)));
+                    end
                     box off
                     
                     
@@ -339,31 +347,34 @@ for ii_cell = 17:length(behavior_struct_names)
                     hold on
                     %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
                     plot(behavior_struct.solo(ii_dir).PSTH_for_field_detection,behavior_struct.solo(1).x_pos_firing_rate{1, 2}   ,'color',solo_colors{ii_dir},'LineWidth',2);
-                    %sort by field hight-
-                    [~,sorted_hights_ind]=sort(behavior_struct.solo(ii_dir).field_height,'descend');
-                    fields_to_plot=sorted_hights_ind;
-                    num_fileds=4;
-                    %take only fields that has enough coverage in the
-                    %tuning curve
-                    to_skip=[];
-                    for fr_i=sorted_hights_ind
-                        if sum(isnan(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i}))>=0.5*length(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i})
-                            to_skip=[to_skip, fr_i];
-                        end
-                        
-                    end
-                    
-                    fields_to_plot=setdiff(fields_to_plot,to_skip);
-                    if length(fields_to_plot)>num_fileds
-                        [~,sorted_hights_ind_ind]=sort(behavior_struct.solo(ii_dir).field_height(fields_to_plot),'descend');
-                        fields_to_plot=fields_to_plot(sorted_hights_ind_ind);
-                        fields_to_plot=fields_to_plot(1:num_fileds);
-                    end
-                    if length(behavior_struct.solo(ii_dir).field_height)<=num_fileds
-                        num_fileds=length(behavior_struct.solo(ii_dir).field_height);
-                        
-                    end
-                    plot(behavior_struct.solo(ii_dir).field_height(fields_to_plot),behavior_struct.solo(ii_dir).field_center(fields_to_plot),'*r')
+%                     %sort by field hight-
+%                     [~,sorted_hights_ind]=sort(behavior_struct.solo(ii_dir).field_height,'descend');
+%                     fields_to_plot=sorted_hights_ind;
+%                     num_fileds=length();
+%                     %take only fields that has enough coverage in the
+%                     %tuning curve
+%                     to_skip=[];
+%                     for fr_i=sorted_hights_ind
+%                         if sum(isnan(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i}))>=0.5*length(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i})
+%                             to_skip=[to_skip, fr_i];
+%                         end
+%                         
+%                     end
+%                     
+%                     fields_to_plot=setdiff(fields_to_plot,to_skip);
+%                     if length(fields_to_plot)>num_fileds
+%                         [~,sorted_hights_ind_ind]=sort(behavior_struct.solo(ii_dir).field_height(fields_to_plot),'descend');
+%                         fields_to_plot=fields_to_plot(sorted_hights_ind_ind);
+%                         fields_to_plot=fields_to_plot(1:num_fileds);
+%                     end
+%                     if length(behavior_struct.solo(ii_dir).field_height)<=num_fileds
+%                         num_fileds=length(behavior_struct.solo(ii_dir).field_height);
+%                         
+%                     end
+                    %plot(behavior_struct.solo(ii_dir).field_height(fields_to_plot),behavior_struct.solo(ii_dir).field_center(fields_to_plot),'*r')
+                    % plot all fields:
+                    fields_to_plot=1:length(behavior_struct.solo(ii_dir).field_height);
+                    plot(behavior_struct.solo(ii_dir).field_height,behavior_struct.solo(ii_dir).field_center,'*r')
                     if ~isempty(fields_to_plot)
                         for fr_i= fields_to_plot
                             plot([-0.5 -0.5],[behavior_struct.solo(ii_dir).field_edges(1,fr_i),behavior_struct.solo(ii_dir).field_edges(2,fr_i)],'color',[.5 .5 .5],'linewidth',2)
@@ -382,24 +393,26 @@ for ii_cell = 17:length(behavior_struct_names)
                     
                     %% plot per field
                     y_pos_init=[0.05,0.3,0.6];
-                    
+                    smooth_vec=[3,5,7];
                     % per field firing rate:
-                    if num_fileds>0
-                        for smooth_i=1:3
-                            sorted_hights_ind_sorted=sort(sorted_hights_ind);
+                    if length(fields_to_plot)>0
+                        for smooth_i=1 %for now plot only for window of 3
+                            %sorted_hights_ind_sorted=sort(sorted_hights_ind);
                             dis_y_pos=0.05;
                             
                             count=0;
                             
-                            for fr_i=sort(fields_to_plot)
+                            for fr_i=fields_to_plot
                                 count=count+1;
                                 r=behavior_struct.co(ii_dir).firing_rate.time_fr_per_field_new_smooth_smooth_window{fr_i}(smooth_i,:);
                                 y_pos=y_pos_init(smooth_i)+dis_y_pos*(count-1);
                                 axes('units','normalized','Position',[0.35+dir_adj y_pos 0.12 0.05]);
-                                if sum(~isnan(r))>=0.5*length(r)
+                                [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
+                                if max(ind_length)>=0.5*length(r)
                                     bins_center=time_X_bins_vector_of_centers;
                                     bins=time_X_bins_vector;
                                     time_signif_field_new_smooth=behavior_struct.co(ii_dir).firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i};
+                                    
                                     shuf_data=time_signif_field_new_smooth.shuffled_data  ;
                                     
                                     plot(bins_center,shuf_data,'color',spike_colors{3},'LineWidth',lwidth); hold on;
@@ -408,12 +421,14 @@ for ii_cell = 17:length(behavior_struct_names)
                                     prc_5_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},5);
                                     prc_95_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},95);
                                     prc_50_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},50);
+                                    mean_solo=nanmean(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i});
                                     plot((max(bins)*1.05)*ones(1,2),[prc_5_solo,prc_95_solo],'ko')
                                     plot((max(bins)*1.05)*ones(1,1),[prc_50_solo],'g.')
+                                    plot((max(bins)*1.05)*ones(1,1),mean_solo,'sm')
 
                                     x_limits = [min(bins), max(bins)*1.2];
                                     max_y = round(max(max([r;shuf_data]))*1.1*10) / 10 +1;
-                                    max_y=max([max_y,prc_95_solo]);
+                                    max_y=max([max_y,prc_95_solo])*1.1;
                                     if max_y < 1
                                         max_y = 1;
                                     end
@@ -443,6 +458,9 @@ for ii_cell = 17:length(behavior_struct_names)
                                         set(gca,'xlim',x_limits,'XTick',[],'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
                                         
                                     end
+                                    if count==length(fields_to_plot)
+                                       title(sprintf('smooth wind=%d',smooth_vec(smooth_i))) 
+                                    end
                                     %                             r=behavior_struct.co(ii_dir).firing_rate.time_x_fr_per_field{1, fr_i};
                                     %                             sparsity=(nanmean(r).^2)/nanmean(r.^2);
                                     %                             std_r=nanstd(r);
@@ -464,7 +482,8 @@ for ii_cell = 17:length(behavior_struct_names)
                                     % str = sprintf('Hz');
                                     %ylabel(str,'fontsize',fsize)
                                     box off
-                                end
+                               % end
+                                    end
                             end
                         end
                         
