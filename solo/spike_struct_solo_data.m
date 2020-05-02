@@ -128,7 +128,7 @@ for ii_dir = 1:2
         field_center=[fields.loc];
         field_size=[fields.width_href];
         field_height=[fields.peak];
-        field_edges=reshape([fields.edges_href],2,length([fields.edges_href])/2)';
+        field_edges=reshape([fields.edges_prc],2,length([fields.edges_prc])/2)';
         
         PSTH=FR_map.PSTH;
         field_height_norm_by_mean=field_height./nanmean(PSTH);
