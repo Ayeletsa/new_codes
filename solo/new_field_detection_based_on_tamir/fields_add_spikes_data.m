@@ -15,6 +15,10 @@ for ii_field = 1:length(fields)
     fields(ii_field).edges_prc = prctile(fields(ii_field).spikes_pos, prm.fields.width_prc);
     fields(ii_field).width_prc = range(fields(ii_field).edges_prc);
     fields(ii_field).width_std = std(fields(ii_field).spikes_pos);
+    %calc also range based on all spikes:
+    fields(ii_field).edges_all_spk = [min(fields(ii_field).spikes_pos) max(fields(ii_field).spikes_pos)] ;
+    fields(ii_field).width_all_spk = range(fields(ii_field).edges_all_spk);
+    
     % get number of spikes in field per flight
     % first, check if the bat passed the field in that flight! (if not set nan)
     FE_no_field_pass_IX = cellfun(@(x)(isempty(get_data_in_ti(x,field_edges))),{FE.pos});
