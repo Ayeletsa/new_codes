@@ -5,6 +5,9 @@ load(population_param_file_name)
 load(co_param_file_name)
 
 co_time_fig_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\figures\per_field_time_analysis\';
+%temp params for cells
+SI_threshold=1;
+min_n_spike=100;
 %% structs' parameters
 
 files = dir(cell_co_solo_initial_analysis_struct_folder);
@@ -46,6 +49,15 @@ for ii_cell = 3:length(behavior_struct_names)
     day=behavior_struct.exp_data.day;
     cell_num=behavior_struct.exp_data.cell_num;
     if ~isnan(behavior_struct.co(1).inter_field_firing_rate.inter_field_edge)  | ~isnan(behavior_struct.co(2).inter_field_firing_rate.inter_field_edge)
+        % check if include cell:
+    a=max([behavior_struct.solo.SI])>SI_threshold;
+    b=(sum(~isnan(cell_co_solo_initial_analysis.solo(1).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(1).spikes.ts_usec(:))))>min_n_spike;
+    c=(sum(~isnan(cell_co_solo_initial_analysis.solo(2).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(2).spikes.ts_usec(:))))>min_n_spike;
+    d=b | c;
+    e=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
+    cond_vec=[a,d,e];
+    if sum(cond_vec)==length(cond_vec)
+    
         shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
         file_name = fullfile(co_shuffle_folder_name,shuffle_struct_name);
         if exist(file_name)
@@ -406,7 +418,7 @@ for ii_cell = 3:length(behavior_struct_names)
                                 count=count+1;
                                 r=behavior_struct.co(ii_dir).firing_rate.time_fr_per_field_new_smooth_smooth_window{fr_i}(smooth_i,:);
                                 y_pos=y_pos_init(smooth_i)+dis_y_pos*(count-1);
-                                axes('units','normalized','Position',[0.35+dir_adj y_pos 0.12 0.05]);
+                                axes('units','normalized','Position',[0.33+dir_adj y_pos 0.12 0.05]);
                                 [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
                                 if max(ind_length)>=0.5*length(r)
                                     bins_center=time_X_bins_vector_of_centers;
@@ -469,7 +481,7 @@ for ii_cell = 3:length(behavior_struct_names)
                                     %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_extreme_bins==1
                                     %                                 text(x_limits(2),max_y*0.5,sprintf('SI=%.2f sig bins \n #spikes=%d',behavior_struct.co(ii_dir).firing_rate.time_information_per_spike_per_field{fr_i},behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}),'color',[1 0 0])
                                     %                             else
-                                    %                                 text(x_limits(2),max_y*0.5,sprintf('SI=%.2f \n #spikes=%d',behavior_struct.co(ii_dir).firing_rate.time_information_per_spike_per_field{fr_i},behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}))
+                                                                     text(x_limits(2),max_y*0.5,sprintf('#spikes=%d',behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}))
                                     %
                                     %                             end
                                     %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_CV==1
@@ -509,7 +521,7 @@ for ii_cell = 3:length(behavior_struct_names)
 %                 saveas(gcf,fig_name)
 %             end
              clf(gcf)
-            
+        end   
         else
             continue
         end
