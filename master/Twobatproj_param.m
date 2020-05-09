@@ -2,8 +2,8 @@ function Twobatproj_param(param_folder)
 
 %% folders:
 % data input:
-%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
-params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
+params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
+%params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
 
 % data output:
 main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
@@ -188,7 +188,6 @@ params.co.dis_X_bin_size_2D=3; %changded to 3 meter
 params.co.allo_X_bins_vector_2D=params.co.allo_X_min:params.co.allo_X_bin_size_2D:params.co.allo_X_max;
 params.co.allo_X_bins_vector_of_centers_2D=params.co.allo_X_bins_vector_2D(1:end-1)+params.co.allo_X_bin_size_2D/2;
 params.co.dis_X_bins_vector_2D=linspace(params.co.dis_X_min,params.co.dis_X_max,27);
-params.co.dis_X_bin_size_2D=min(diff(params.co.dis_X_bins_vector_2D));
 params.co.dis_X_bins_vector_of_centers_2D=params.co.dis_X_bins_vector_2D(1:end-1)+params.co.dis_X_bin_size_2D/2;
 
 
@@ -263,6 +262,9 @@ params.co_shuffle.coherence_X_bins_vector=params.co_shuffle.coherence_X_min:para
 params.co_shuffle.coherence_X_bins_vector_of_centers=params.co_shuffle.coherence_X_bins_vector(1:end-1)+params.co_shuffle.coherence_X_bin_size/2;
 
 % d. allocentric parameters
+params.co_shuffle.allo_bin_size = params.solo.solo_X_bin_size;
+params.co_shuffle.allo_bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
+params.co_shuffle.ker_SD=params.fields.ker_SD;
 params.co_shuffle.tunnel_limits = [0 135];
 params.co_shuffle.pos_X_min = params.co_shuffle.tunnel_limits(1);
 params.co_shuffle.pos_X_max = params.co_shuffle.tunnel_limits(2);
