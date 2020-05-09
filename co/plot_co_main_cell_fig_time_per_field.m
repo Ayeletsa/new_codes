@@ -1,8 +1,9 @@
-function plot_co_main_cell_fig_time_per_field(dir_param_file_name,population_param_file_name,co_param_file_name)
+function plot_co_main_cell_fig_time_per_field(dir_param_file_name,population_param_file_name,co_param_file_name,per_field_param_file_name)
 % plot imporatnat statistics for cross-overs analysis
 load(dir_param_file_name)
 load(population_param_file_name)
 load(co_param_file_name)
+load(per_field_param_file_name)
 
 co_time_fig_folder_name='D:\Ayelet\2bat_proj\Analysis\new_code\figures\per_field_time_analysis\';
 %temp params for cells
@@ -48,30 +49,30 @@ for ii_cell = 3:length(behavior_struct_names)
     bat=behavior_struct.exp_data.bat;
     day=behavior_struct.exp_data.day;
     cell_num=behavior_struct.exp_data.cell_num;
-    if ~isnan(behavior_struct.co(1).inter_field_firing_rate.inter_field_edge)  | ~isnan(behavior_struct.co(2).inter_field_firing_rate.inter_field_edge)
+    if ~isempty(behavior_struct.co(1).per_field_all_spk)  | ~isempty(behavior_struct.co(2).per_field_all_spk)
         % check if include cell:
-    a=max([behavior_struct.solo.SI])>SI_threshold;
-    b=(sum(~isnan(cell_co_solo_initial_analysis.solo(1).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(1).spikes.ts_usec(:))))>min_n_spike;
-    c=(sum(~isnan(cell_co_solo_initial_analysis.solo(2).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(2).spikes.ts_usec(:))))>min_n_spike;
-    d=b | c;
-    e=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
-    cond_vec=[a,d,e];
-    if sum(cond_vec)==length(cond_vec)
-    
-        shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
-        file_name = fullfile(co_shuffle_folder_name,shuffle_struct_name);
-        if exist(file_name)
-            co_shuffle_struct=load(file_name);
-            co_shuffle_struct=co_shuffle_struct.shuffling_struct;
+        a=max([behavior_struct.solo.SI])>SI_threshold;
+        b=(sum(~isnan(cell_co_solo_initial_analysis.solo(1).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(1).spikes.ts_usec(:))))>min_n_spike;
+        c=(sum(~isnan(cell_co_solo_initial_analysis.solo(2).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(2).spikes.ts_usec(:))))>min_n_spike;
+        d=b | c;
+        e=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
+        cond_vec=[a,d,e];
+        if sum(cond_vec)==length(cond_vec)
             
-            
-            %% write cell's ID and stability
-            % different bin sixe for 2D
-            for bin_dis_i=1:size(behavior_struct.co(1).firing_rate.dis_bin_size,1)
-                %  for bin_allo_i=1:size(behavior_struct.co(1).firing_rate.allo_bin_size,2)
-                bin_allo_i=bin_dis_i;
-                dis_before_after_co = behavior_struct.co(1).params.dis_before_after_co;
+            shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
+            file_name = fullfile(co_shuffle_folder_name,shuffle_struct_name);
+            if exist(file_name)
+                co_shuffle_struct=load(file_name);
+                co_shuffle_struct=co_shuffle_struct.shuffling_struct;
                 
+                
+                %% write cell's ID and stability
+                % different bin sixe for 2D
+                %             for bin_dis_i=1:size(behavior_struct.co(1).firing_rate.dis_bin_size,1)
+                %                 %  for bin_allo_i=1:size(behavior_struct.co(1).firing_rate.allo_bin_size,2)
+                %                 bin_allo_i=bin_dis_i;
+                %                 dis_before_after_co = behavior_struct.co(1).params.dis_before_after_co;
+                %
                 % write cell's ID
                 str = sprintf('Cell #%d, Date: %d, Bat %d',cell_num,day,bat) ;
                 annotation('textbox',[.06 .88 .3 .1],'string',str,'EdgeColor','none','fontsize',15)
@@ -117,7 +118,28 @@ for ii_cell = 3:length(behavior_struct_names)
                 %%     plot data for every direction
                 
                 for ii_dir = 1:2
-                    
+                    %% tempppppp
+                    if ~isempty(cell_co_solo_initial_analysis.solo(ii_dir).fields)
+                        switch per_field_to_plot
+                            case 1
+                                
+                                per_field=cell_co_solo_initial_analysis.co(ii_dir).per_field_href;
+                                x=[cell_co_solo_initial_analysis.solo(ii_dir).fields.edges_href];
+                                field_edges=reshape(x,2,length(x)/2);
+                            case 2
+                                per_field=cell_co_solo_initial_analysis.co(ii_dir).per_field_prc;
+                                x=[cell_co_solo_initial_analysis.solo(ii_dir).fields.edges_prc];
+                                field_edges=reshape(x,2,length(x)/2);
+                                
+                            case 3
+                                per_field=cell_co_solo_initial_analysis.co(ii_dir).per_field_all_spk;
+                                x=[cell_co_solo_initial_analysis.solo(ii_dir).fields.edges_all_spk];
+                                field_edges=reshape(x,2,length(x)/2);
+                        end
+                    else
+                        field_edges=[];
+                    end
+                    %%
                     dir_adj = (ii_dir-1)*.5;
                     % main figure
                     co_ax{1} = axes('units','normalized','Position',[0.05+dir_adj 0.58 0.12 0.17]); % main fig
@@ -282,7 +304,6 @@ for ii_cell = 3:length(behavior_struct_names)
                     box off
                     
                     
-                    
                     % main figure
                     axes(co_ax{11})
                     hold on
@@ -290,16 +311,13 @@ for ii_cell = 3:length(behavior_struct_names)
                     %         plot(behavior_struct.co(ii_dir).bsp.dis_m(:),behavior_struct.co(ii_dir).bsp.x_pos(:),'.','color',spike_colors{3})
                     %         plot(behavior_struct.co(ii_dir).spikes.dis_m(:),behavior_struct.co(ii_dir).spikes.x_pos(:),'.','color',spike_colors{ii_dir},'markersize',8)
                     normalize_to_other_max=[];
-                    field_density_mat_X_Y=behavior_struct.co(ii_dir).firing_rate.field_density_smoothed_XY_with_NaN{bin_dis_i,bin_allo_i};
-                    X_bins_vector=behavior_struct.co(ii_dir).firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i};
-                    X_bins_vector_of_centers=behavior_struct.co(ii_dir).firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i};
-                    Y_bins_vector=behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector{bin_dis_i,bin_allo_i};
-                    Y_bins_vector_of_centers=behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i};
+                    field_density_mat_X_Y=behavior_struct.co(ii_dir).firing_rate.field_density_smoothed_XY_with_NaN;
                     
-                    allo_bin_size=behavior_struct.co(ii_dir).firing_rate.allo_bin_size{bin_dis_i,bin_allo_i};
-                    dis_bin_size=behavior_struct.co(ii_dir).firing_rate.dis_bin_size{bin_dis_i,bin_allo_i};
                     
-                    [xlimits, ylimits] = fn_plot_2D_field (field_density_mat_X_Y, X_bins_vector, X_bins_vector_of_centers,Y_bins_vector, Y_bins_vector_of_centers,normalize_to_other_max);
+                    %                 allo_bin_size=behavior_struct.co(ii_dir).firing_rate.allo_bin_size;
+                    %                 dis_bin_size=behavior_struct.co(ii_dir).firing_rate.dis_bin_size;
+                    
+                    [xlimits, ylimits] = fn_plot_2D_field (field_density_mat_X_Y, dis_X_bins_vector_2D, dis_X_bins_vector_of_centers_2D,allo_X_bins_vector_2D, allo_X_bins_vector_of_centers_2D,normalize_to_other_max);
                     set(gca,'xlim',xlimits,...
                         'ylim',ylimits,...
                         'ytick',tunnel_limits)
@@ -313,8 +331,8 @@ for ii_cell = 3:length(behavior_struct_names)
                     axes(co_ax{12})
                     hold on
                     % plot(co_shuffle_struct(ii_dir).shuffled_data.ego_bin_centers,co_shuffle_struct(ii_dir).shuffled_data.ego_firing_rate(2:end,:),'color',spike_colors{3},'LineWidth',lwidth);
-                    plot(behavior_struct.co(ii_dir).firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i}  ,behavior_struct.co(ii_dir).firing_rate.dis_x_pos_fr_for_2D{bin_dis_i,bin_allo_i},'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                    max_y = round(max(max(behavior_struct.co(ii_dir).firing_rate.dis_x_pos_fr_for_2D{bin_dis_i,bin_allo_i}))*1.1*10) / 10;
+                    plot(dis_X_bins_vector_of_centers_2D  ,behavior_struct.co(ii_dir).firing_rate.dis_x_pos_fr_for_2D,'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                    max_y = round(max(max(behavior_struct.co(ii_dir).firing_rate.dis_x_pos_fr_for_2D))*1.1*10) / 10;
                     if max_y < 1
                         max_y = 1;
                     end
@@ -330,8 +348,8 @@ for ii_cell = 3:length(behavior_struct_names)
                     hold on
                     %  plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
                     % plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos(1,:),behavior_struct.co(ii_dir).firing_rate.solo_x_pos(2,:),'color',solo_colors{ii_dir},'LineWidth',2);
-                    plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D{bin_dis_i,bin_allo_i},behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i} ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                    max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D{bin_dis_i,bin_allo_i}) );
+                    plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,allo_X_bins_vector_of_centers_2D ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                    max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D) );
                     if max_x~=0
                         set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                     end
@@ -344,9 +362,9 @@ for ii_cell = 3:length(behavior_struct_names)
                     axes(co_ax{18})
                     hold on
                     %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
-                    plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D{bin_dis_i,bin_allo_i},behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i},'color',solo_colors{ii_dir},'LineWidth',2);
-                    %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D{bin_dis_i,bin_allo_i},behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i} ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                    max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D{bin_dis_i,bin_allo_i}) );
+                    plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D,allo_X_bins_vector_of_centers_2D,'color',solo_colors{ii_dir},'LineWidth',2);
+                    %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                    max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D) );
                     if max_x~=0
                         set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                     end
@@ -359,37 +377,39 @@ for ii_cell = 3:length(behavior_struct_names)
                     hold on
                     %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
                     plot(behavior_struct.solo(ii_dir).PSTH_for_field_detection,behavior_struct.solo(1).x_pos_firing_rate{1, 2}   ,'color',solo_colors{ii_dir},'LineWidth',2);
-%                     %sort by field hight-
-%                     [~,sorted_hights_ind]=sort(behavior_struct.solo(ii_dir).field_height,'descend');
-%                     fields_to_plot=sorted_hights_ind;
-%                     num_fileds=length();
-%                     %take only fields that has enough coverage in the
-%                     %tuning curve
-%                     to_skip=[];
-%                     for fr_i=sorted_hights_ind
-%                         if sum(isnan(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i}))>=0.5*length(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i})
-%                             to_skip=[to_skip, fr_i];
-%                         end
-%                         
-%                     end
-%                     
-%                     fields_to_plot=setdiff(fields_to_plot,to_skip);
-%                     if length(fields_to_plot)>num_fileds
-%                         [~,sorted_hights_ind_ind]=sort(behavior_struct.solo(ii_dir).field_height(fields_to_plot),'descend');
-%                         fields_to_plot=fields_to_plot(sorted_hights_ind_ind);
-%                         fields_to_plot=fields_to_plot(1:num_fileds);
-%                     end
-%                     if length(behavior_struct.solo(ii_dir).field_height)<=num_fileds
-%                         num_fileds=length(behavior_struct.solo(ii_dir).field_height);
-%                         
-%                     end
+                    
+                    
+                    %                     %sort by field hight-
+                    %                     [~,sorted_hights_ind]=sort(behavior_struct.solo(ii_dir).field_height,'descend');
+                    %                     fields_to_plot=sorted_hights_ind;
+                    %                     num_fileds=length();
+                    %                     %take only fields that has enough coverage in the
+                    %                     %tuning curve
+                    %                     to_skip=[];
+                    %                     for fr_i=sorted_hights_ind
+                    %                         if sum(isnan(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i}))>=0.5*length(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i})
+                    %                             to_skip=[to_skip, fr_i];
+                    %                         end
+                    %
+                    %                     end
+                    %
+                    %                     fields_to_plot=setdiff(fields_to_plot,to_skip);
+                    %                     if length(fields_to_plot)>num_fileds
+                    %                         [~,sorted_hights_ind_ind]=sort(behavior_struct.solo(ii_dir).field_height(fields_to_plot),'descend');
+                    %                         fields_to_plot=fields_to_plot(sorted_hights_ind_ind);
+                    %                         fields_to_plot=fields_to_plot(1:num_fileds);
+                    %                     end
+                    %                     if length(behavior_struct.solo(ii_dir).field_height)<=num_fileds
+                    %                         num_fileds=length(behavior_struct.solo(ii_dir).field_height);
+                    %
+                    %                     end
                     %plot(behavior_struct.solo(ii_dir).field_height(fields_to_plot),behavior_struct.solo(ii_dir).field_center(fields_to_plot),'*r')
                     % plot all fields:
                     fields_to_plot=1:length(behavior_struct.solo(ii_dir).field_height);
                     plot(behavior_struct.solo(ii_dir).field_height,behavior_struct.solo(ii_dir).field_center,'*r')
                     if ~isempty(fields_to_plot)
                         for fr_i= fields_to_plot
-                            plot([-0.5 -0.5],[behavior_struct.solo(ii_dir).field_edges(1,fr_i),behavior_struct.solo(ii_dir).field_edges(2,fr_i)],'color',[.5 .5 .5],'linewidth',2)
+                            plot([-0.5 -0.5],[field_edges,field_edges],'color',[.5 .5 .5],'linewidth',2)
                         end
                     end
                     %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D{bin_dis_i,bin_allo_i},behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i} ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
@@ -408,123 +428,123 @@ for ii_cell = 3:length(behavior_struct_names)
                     smooth_vec=[3,5,7];
                     % per field firing rate:
                     if length(fields_to_plot)>0
-                        for smooth_i=1 %for now plot only for window of 3
-                            %sorted_hights_ind_sorted=sort(sorted_hights_ind);
-                            dis_y_pos=0.05;
-                            
-                            count=0;
-                            
-                            for fr_i=fields_to_plot
-                                count=count+1;
-                                r=behavior_struct.co(ii_dir).firing_rate.time_fr_per_field_new_smooth_smooth_window{fr_i}(smooth_i,:);
-                                y_pos=y_pos_init(smooth_i)+dis_y_pos*(count-1);
-                                axes('units','normalized','Position',[0.33+dir_adj y_pos 0.12 0.05]);
-                                [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
-                                if max(ind_length)>=0.5*length(r)
-                                    bins_center=time_X_bins_vector_of_centers;
-                                    bins=time_X_bins_vector;
-                                    time_signif_field_new_smooth=behavior_struct.co(ii_dir).firing_rate.time_signif_field_new_smooth{fr_i}{smooth_i};
-                                    
-                                    shuf_data=time_signif_field_new_smooth.shuffled_data  ;
-                                    
-                                    plot(bins_center,shuf_data,'color',spike_colors{3},'LineWidth',lwidth); hold on;
-                                    plot(bins_center ,r,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                                    % plot solo vriability within field:
-                                    prc_5_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},5);
-                                    prc_95_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},95);
-                                    prc_50_solo=prctile(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i},50);
-                                    mean_solo=nanmean(behavior_struct.co(ii_dir).firing_rate.all_firing_rate_solo_per_field{fr_i});
-                                    plot((max(bins)*1.05)*ones(1,2),[prc_5_solo,prc_95_solo],'ko')
-                                    plot((max(bins)*1.05)*ones(1,1),[prc_50_solo],'g.')
-                                    plot((max(bins)*1.05)*ones(1,1),mean_solo,'sm')
-
-                                    x_limits = [min(bins), max(bins)*1.2];
-                                    max_y = round(max(max([r;shuf_data]))*1.1*10) / 10 +1;
-                                    max_y=max([max_y,prc_95_solo])*1.1;
-                                    if max_y < 1
-                                        max_y = 1;
-                                    end
-                                    if time_signif_field_new_smooth.signif_based_on_extreme_bins==1
-                                        neg_signif=time_signif_field_new_smooth.neg_signif;
-                                        plot(bins_center(neg_signif),r(neg_signif)+1,'r*')
-                                        for width_i=1:length(time_signif_field_new_smooth.width_neg_interp)
-                                            if ~isnan(time_signif_field_new_smooth.width_neg_interp(width_i))
-                                                plot(time_signif_field_new_smooth.width_line_x_neg_interp(width_i,:),time_signif_field_new_smooth.width_line_y_neg_interp(width_i,:),'k')
-                                                text(mean(time_signif_field_new_smooth.width_line_x_neg_interp(width_i,:)),mean(time_signif_field_new_smooth.width_line_y_neg_interp(width_i,:))*0.5,sprintf('%.2f\n%.2f', time_signif_field_new_smooth.width_neg_interp(width_i)./1e6,time_signif_field_new_smooth.neg_rise_time_interp(width_i)./1e6),'color','r')
-                                            end
-                                        end
-                                        pos_signif=time_signif_field_new_smooth.pos_signif;
-                                        plot(bins_center(pos_signif),r(pos_signif)+1,'g*')
-                                        for width_i=1:length(time_signif_field_new_smooth.width_pos_interp)
-                                            if ~isnan(time_signif_field_new_smooth.width_pos_interp(width_i))
-                                                plot(time_signif_field_new_smooth.width_line_x_pos_interp(width_i,:),time_signif_field_new_smooth.width_line_y_pos_interp(width_i,:),'k')
-                                                text(mean(time_signif_field_new_smooth.width_line_x_pos_interp(width_i,:)),mean(time_signif_field_new_smooth.width_line_y_pos_interp(width_i,:))*0.5,sprintf('%.2f\n%.2f', time_signif_field_new_smooth.width_pos_interp(width_i)./1e6,time_signif_field_new_smooth.pos_rise_time_interp(width_i)./1e6),'color','g')
-                                            end
-                                        end
-                                    end
-                                    
-                                    if count==1
-                                        set(gca,'xlim',x_limits,'XTick',(-3:1:3)*1e6,'XTickLabel',-3:1:3,'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
-                                        xlabel('Time to CO (s)')
-                                    else
-                                        set(gca,'xlim',x_limits,'XTick',[],'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
-                                        
-                                    end
-                                    if count==length(fields_to_plot)
-                                       title(sprintf('smooth wind=%d',smooth_vec(smooth_i))) 
-                                    end
-                                    %                             r=behavior_struct.co(ii_dir).firing_rate.time_x_fr_per_field{1, fr_i};
-                                    %                             sparsity=(nanmean(r).^2)/nanmean(r.^2);
-                                    %                             std_r=nanstd(r);
-                                    %                             mean_r=nanmean(r);
-                                    %                             cv=std_r/mean_r;
-                                    %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_extreme_bins==1
-                                    %                                 text(x_limits(2),max_y*0.5,sprintf('SI=%.2f sig bins \n #spikes=%d',behavior_struct.co(ii_dir).firing_rate.time_information_per_spike_per_field{fr_i},behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}),'color',[1 0 0])
-                                    %                             else
-                                                                     text(x_limits(2),max_y*0.5,sprintf('#spikes=%d',behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}))
-                                    %
-                                    %                             end
-                                    %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_CV==1
-                                    %
-                                    %                                 text(x_limits(2),0,sprintf('cv=%.2f',cv),'color',[1 0 0])
-                                    %                             else
-                                    %                                 text(x_limits(2),0,sprintf('cv=%.2f',cv))
-                                    %                             end
-                                    %
-                                    % str = sprintf('Hz');
-                                    %ylabel(str,'fontsize',fsize)
-                                    box off
-                               % end
-                                    end
-                            end
-                        end
+                        %for smooth_i=1 %for now plot only for window of 3
+                        %sorted_hights_ind_sorted=sort(sorted_hights_ind);
+                        dis_y_pos=0.05;
                         
+                        count=0;
+                        
+                        for fr_i=fields_to_plot
+                            count=count+1;
+                            
+                            r=per_field(fr_i).tuning_time_fr_per_field; 
+                            y_pos=y_pos_init(1)+dis_y_pos*(count-1);
+                            axes('units','normalized','Position',[0.33+dir_adj y_pos 0.12 0.05]);
+                            [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
+                            if max(ind_length)>=0.5*length(r)
+                                bins_center=time_X_bins_vector_of_centers;
+                                bins=time_X_bins_vector;
+                                time_signif_field=per_field(fr_i).time_signif_field;
+                                shuf_data=per_field(fr_i).time_signif_field.shuffled_data;
+                                
+                                plot(bins_center,shuf_data,'color',spike_colors{3},'LineWidth',lwidth); hold on;
+                                plot(bins_center ,r,'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                                % plot solo vriability within field:
+                                prc_5_solo=prctile(per_field(fr_i).solo_firing_rates_time_bins,5);
+                                prc_95_solo=prctile(per_field(fr_i).solo_firing_rates_time_bins,95);
+                                prc_50_solo=prctile(per_field(fr_i).solo_firing_rates_time_bins,50);
+                                mean_solo=nanmean(per_field(fr_i).solo_firing_rates_time_bins);
+                                plot((max(bins)*1.05)*ones(1,2),[prc_5_solo,prc_95_solo],'ko')
+                                plot((max(bins)*1.05)*ones(1,1),[prc_50_solo],'g.')
+                                plot((max(bins)*1.05)*ones(1,1),mean_solo,'sm')
+                                
+                                x_limits = [min(bins), max(bins)*1.2];
+                                max_y = round(max(max([r;shuf_data]))*1.1*10) / 10 +1;
+                                max_y=max([max_y,prc_95_solo])*1.1;
+                                if max_y < 1
+                                    max_y = 1;
+                                end
+                                if time_signif_field.signif_based_on_extreme_bins==1
+                                    neg_signif=time_signif_field.neg_signif;
+                                    plot(bins_center(neg_signif),r(neg_signif)+1,'r*')
+                                    for width_i=1:length(time_signif_field.width_neg_interp)
+                                        if ~isnan(time_signif_field.width_neg_interp(width_i))
+                                            plot(time_signif_field.width_line_x_neg_interp(width_i,:),time_signif_field.width_line_y_neg_interp(width_i,:),'k')
+                                            text(mean(time_signif_field.width_line_x_neg_interp(width_i,:)),mean(time_signif_field.width_line_y_neg_interp(width_i,:))*0.5,sprintf('%.2f\n%.2f', time_signif_field.width_neg_interp(width_i)./1e6,time_signif_field.neg_rise_time_interp(width_i)./1e6),'color','r')
+                                        end
+                                    end
+                                    pos_signif=time_signif_field.pos_signif;
+                                    plot(bins_center(pos_signif),r(pos_signif)+1,'g*')
+                                    for width_i=1:length(time_signif_field.width_pos_interp)
+                                        if ~isnan(time_signif_field.width_pos_interp(width_i))
+                                            plot(time_signif_field.width_line_x_pos_interp(width_i,:),time_signif_field.width_line_y_pos_interp(width_i,:),'k')
+                                            text(mean(time_signif_field.width_line_x_pos_interp(width_i,:)),mean(time_signif_field.width_line_y_pos_interp(width_i,:))*0.5,sprintf('%.2f\n%.2f', time_signif_field.width_pos_interp(width_i)./1e6,time_signif_field.pos_rise_time_interp(width_i)./1e6),'color','g')
+                                        end
+                                    end
+                                end
+                                
+                                if count==1
+                                    set(gca,'xlim',x_limits,'XTick',(-3:1:3)*1e6,'XTickLabel',-3:1:3,'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
+                                    xlabel('Time to CO (s)')
+                                else
+                                    set(gca,'xlim',x_limits,'XTick',[],'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
+                                    
+                                end
+%                                 if count==length(fields_to_plot)
+%                                     title(sprintf('smooth wind=%d',smooth_vec(smooth_i)))
+%                                 end
+%                                 %                             r=behavior_struct.co(ii_dir).firing_rate.time_x_fr_per_field{1, fr_i};
+                                %                             sparsity=(nanmean(r).^2)/nanmean(r.^2);
+                                %                             std_r=nanstd(r);
+                                %                             mean_r=nanmean(r);
+                                %                             cv=std_r/mean_r;
+                                %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_extreme_bins==1
+                                %                                 text(x_limits(2),max_y*0.5,sprintf('SI=%.2f sig bins \n #spikes=%d',behavior_struct.co(ii_dir).firing_rate.time_information_per_spike_per_field{fr_i},behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}),'color',[1 0 0])
+                                %                             else
+                                text(x_limits(2),max_y*0.5,sprintf('#spikes=%d',per_field(fr_i).number_of_spikes_per_field))
+                                %
+                                %                             end
+                                %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_CV==1
+                                %
+                                %                                 text(x_limits(2),0,sprintf('cv=%.2f',cv),'color',[1 0 0])
+                                %                             else
+                                %                                 text(x_limits(2),0,sprintf('cv=%.2f',cv))
+                                %                             end
+                                %
+                                % str = sprintf('Hz');
+                                %ylabel(str,'fontsize',fsize)
+                                box off
+                                % end
+                            %end
+                        end
                     end
+                    
                 end
-                
-                
-                %% save figure
-                
-                fig = gcf;
-                fig.InvertHardcopy = 'off';
-                if ~exist(co_time_fig_folder_name)
-                    mkdir(co_time_fig_folder_name)
-                end
-                fig_name=fullfile(co_time_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
-                saveas(gcf,fig_name)
-                
             end
             
-%             %% for CO signif cells save also in relevant dir:
-%             if signif==1
-%                 fig_name=fullfile(co_signif_cells_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
-%                 saveas(gcf,fig_name)
-%             end
-             clf(gcf)
-        end   
-        else
-            continue
+            
+            %% save figure
+            
+            fig = gcf;
+            fig.InvertHardcopy = 'off';
+            if ~exist(co_time_fig_folder_name)
+                mkdir(co_time_fig_folder_name)
+            end
+            fig_name=fullfile(co_time_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
+            saveas(gcf,fig_name)
+            
+            %  end
+            
+            %             %% for CO signif cells save also in relevant dir:
+            %             if signif==1
+            %                 fig_name=fullfile(co_signif_cells_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'.png']);
+            %                 saveas(gcf,fig_name)
+            %             end
+            clf(gcf)
         end
+        %  else
+        %    continue
+        % end
     end
     
     %close(gcf)
