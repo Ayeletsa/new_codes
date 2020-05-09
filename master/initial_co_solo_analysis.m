@@ -38,7 +38,7 @@ for ii_cell = 4:length(data_dir_info)
     cell_co_solo_initial_analysis.exp_data.Isolation_dis=cell_struct.spikes.Isolation_dis;
     % analyze each behavior separately
     cell_co_solo_initial_analysis.solo = spike_struct_solo_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name,field_param_file_name);
-    cell_co_solo_initial_analysis.co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i, cell_co_solo_initial_analysis.solo,co_param_file_name,per_field_param_file_name);
+    cell_co_solo_initial_analysis.co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i, cell_co_solo_initial_analysis.solo,co_param_file_name,per_field_param_file_name,field_param_file_name);
     %behavior_struct.obs = behavior_struct_obs_data(bsp_data,cell_struct,tag_i);
     %behavior_struct.tr = behavior_struct_tracking_data(bsp_data,cell_struct,behavioral_modes,tag_i);
     
