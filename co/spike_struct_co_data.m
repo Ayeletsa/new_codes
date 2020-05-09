@@ -1,6 +1,12 @@
-function  co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name,per_field_params_file_name)
+function  co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name,per_field_params_file_name,field_param_file_name)
 load(co_param_file_name)
 us_factor=1e6;
+%% for field detection durin co:
+prm.fields=load(field_param_file_name);
+prm.fields.min_flights_with_spikes_prc=0.1;
+prm.fields.min_flights_with_spikes=3;
+params.fields.min_time_spent_per_meter=0.2;
+%NEED TO TAKE IT TO PARAMS IF I WILL USE IT
 %% create vectors of variables
 
 
@@ -242,10 +248,18 @@ for ii_dir = 1:2
     bsp_vec = bsp.x_pos(isfinite(bsp.x_pos));
     spikes_vec = spikes.x_pos(isfinite(spikes.x_pos));
     
-    [~, ~, ~, allo_co_x_pos_fr, ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth ...
-        (bsp_vec,spikes_vec,allo_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
     
+    % calculate solo firing rate without overlapping spikes
+    data=[bsp_x_pos_at_co';bsp_ts_usec';spikes_x_pos_at_co';spikes_ts_usec'];
+    field_names={'pos','ts','spikes_pos','spikes_ts'};
+    FE=cell2struct(data,field_names,1);
+    FE_PSTH = FE_compute_PSTH(FE,prm);
+    allo_co_x_pos_fr=FE_PSTH.PSTH;
+    
+%     [~, ~, ~, allo_co_x_pos_fr, ~,~] ...
+%         = fn_compute_generic_1D_tuning_new_smooth ...
+%         (bsp_vec,spikes_vec,allo_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+%     
     firing_rate.allo_x_pos = [allo_co_x_pos_fr;allo_X_bins_vector_of_centers];
     
     % to prevent any overlap of spikes between CO and solo,
@@ -260,16 +274,25 @@ for ii_dir = 1:2
     solo_bsp_x_pos(overlapping_bsp_ind) = nan;
     overlapping_spikes_ind = ismember(solo_spikes_ts,spikes.ts_usec);
     solo_spikes_x_pos(overlapping_spikes_ind) = nan;
-    
-    % calculate solo firing rate without overlapping spikes
-    bsp_vec = solo_bsp_x_pos(isfinite(solo_bsp_x_pos));
-    spikes_vec = solo_spikes_x_pos(isfinite(solo_spikes_x_pos));
-    
-    [~, ~, ~, solo_x_pos_fr, ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth ...
-        (bsp_vec,spikes_vec,allo_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-    
-    firing_rate.solo_x_pos = [solo_x_pos_fr;allo_X_bins_vector_of_centers];
+%     solo_bsp_ts(overlapping_bsp_ind)=nan;
+%     solo_spikes_ts(overlapping_spikes_ind)=nan;
+% 
+%     % calculate solo firing rate without overlapping spikes
+%     data=[solo_bsp_ts';bsp_ts_usec';solo_spikes_x_pos';solo_spikes_ts'];
+%     field_names={'pos','ts','spikes_pos','spikes_ts'};
+%     FE=cell2struct(data,field_names,1);
+%     FE_PSTH = FE_compute_PSTH(FE,prm);
+%     solo_x_pos_fr=FE_PSTH.PSTH;
+%     
+%     
+%     bsp_vec = solo_bsp_x_pos(isfinite(solo_bsp_x_pos));
+%     spikes_vec = solo_spikes_x_pos(isfinite(solo_spikes_x_pos));
+%     
+%     [~, ~, ~, solo_x_pos_fr, ~,~] ...
+%         = fn_compute_generic_1D_tuning_new_smooth ...
+%         (bsp_vec,spikes_vec,allo_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+%     
+%     firing_rate.solo_x_pos = [solo_x_pos_fr;allo_X_bins_vector_of_centers];
     
     % d. compute 2D tuning allocentric*CO distance between bats
     
