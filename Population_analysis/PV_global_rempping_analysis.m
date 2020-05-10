@@ -15,15 +15,15 @@ n_shuffles=100;
 SI_threshold=1;
 min_n_spike_vec=[100];
 solo_time_spent_minimum_for_1D_bins=0.03;%need to check!
-range=[-40 40];
+range=[-25 25];% change to run just on non-overlap part between solo and co
 window=10;
 step=2;
 bin_start=range(1):step:range(2)-window;
 bin_end=range(1)+window:step:range(2);
 bin_center=[bin_start+bin_end]./2;
 bin_dis=range(1):step:range(2);
-run_only_on_intersent_data=1;
-full_data=1;
+run_only_on_intersent_data=0;
+full_data=0;
 %solo_X_n_bins = solo_X_max / 2;
 solo_X_bin_size_vec = [1];
 for solo_X_bin_size=solo_X_bin_size_vec
@@ -39,7 +39,7 @@ for solo_X_bin_size=solo_X_bin_size_vec
             solo_X_bin_size=bins_ii;
             solo_X_bins_vector=solo_X_min:solo_X_bin_size:solo_X_max;
             solo_X_bins_vector_of_centers=solo_X_bins_vector(1:end-1)+solo_X_bin_size/2;
-            
+            solo_time_spent_minimum_for_1D_bins=0.03;
             
             cell_count=0;
             
