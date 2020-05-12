@@ -54,7 +54,7 @@ params.behav.frame_per_second=100;
 params.behav.min_solo_length=2*params.behav.frame_per_second; %samples
 params.behav.min_tracking_length=3*params.behav.frame_per_second; %samples
 params.behav.dist_thresh_tracking=20; %meters
-params.behav.dist_thresh_solo=25; %meters
+params.behav.dist_thresh_solo=40; %meters
 params.behav.dist_thresh_CO=5; %meters
 params.behav.CO_window=[20 20]; %meters
 params.behav.max_wind_CO=2*params.behav.frame_per_second;
@@ -64,7 +64,6 @@ params.behav.UT_time_from_CO=2*params.behav.frame_per_second;% 1sec
 params.behav.UT_distance_from_CO=10; %m
 params.behav.bins_to_remove_from_edge_CO_hist=1;
 params.behav.manual_min_dis_from_CO=100; %for manual correction check that the CO is close
-params.behav.frame_per_second=100;
 
 
 %save
@@ -73,22 +72,17 @@ param_file_name=fullfile(param_folder,'behav_params.mat');
 save(param_file_name, '-struct', 'behav_params')
 
 %% parameters for solo analysis
-%parameters for Tuning curve calculation
-
-params.solo.solo_X_min= 0;
-params.solo.solo_X_max= 135;
+%parameters for Tuning curve calculation 
+% -  DO I NEED IT??? -------------
+tunnel_limits=[0 135];
+params.solo.solo_X_min= tunnel_limits(1);
+params.solo.solo_X_max= tunnel_limits(2);
 params.solo.solo_X_n_bins = params.solo.solo_X_max * 2;
 params.solo.solo_X_bin_size = (params.solo.solo_X_max-params.solo.solo_X_min)/params.solo.solo_X_n_bins;
 params.solo.solo_X_bins_vector=params.solo.solo_X_min:params.solo.solo_X_bin_size:params.solo.solo_X_max;
 params.solo.solo_X_bins_vector_of_centers=params.solo.solo_X_bins_vector(1:end-1)+params.solo.solo_X_bin_size/2;
 params.solo.solo_time_spent_minimum_for_1D_bins=0.75;
-params.solo.frames_per_second=100;
-%
-% field_detection_bin_size = 0.5; %m
-% field_detection_X_bins_vector=solo_X_min:field_detection_bin_size:solo_X_max;
-% field_detection_X_bins_vector_of_centers=field_detection_X_bins_vector(1:end-1)+field_detection_bin_size/2;
-%
-params.solo.field_detection_X_bins_vector=params.solo.solo_X_bins_vector;
+params.solo.frames_per_second=params.behav.frame_per_second;
 
 %new flight criteria (distance and time between bsp samples)
 % when shuffling, we shuffle each flight separately. This is a proxy for when a new flight begins:
@@ -98,27 +92,13 @@ params.solo.field_detection_X_bins_vector=params.solo.solo_X_bins_vector;
 params.solo.dis_criteria = [20 20];
 params.solo.new_flight_time_criteria = 1e5;
 
-% params for field detection code (find_fields_PSTH_Basic_withShuffle)
-params.solo.ref_height_for_overlap = 0.5;
-params.solo.minPeakFR = 0.5; %Hz
-params.solo.min_spikes_perField = 10;
-params.solo.percentilesTH = 85; %the firing rate TH has to be higher than 85% of the bins.
-params.solo.stabilityTH = 0.15; % cell has to fire within the field (defind by the
-% ref_height_for_width) in at least 15% of flights.
-params.solo.num_of_flights_minimum = 5; % cell has to fire within the field (defind by the
-% ref_height_for_width) in at least 5 flights.
-params.solo.valley_2_fields_unite_TH = 1; %if the valley between two close fields does
-% not go below 1Hz - unite them to one field.
-params.solo.bin_edges=params.solo.field_detection_X_bins_vector;
-params.solo.ref_height_for_width=0.2;
-params.solo.ref_height_for_overlap=0.5;
-
 %save
 solo_params=params.solo;
 param_file_name=fullfile(param_folder,'solo_params.mat');
 save(param_file_name, '-struct', 'solo_params')
 
 %% field detection params
+params.fields.bin_centers=params.solo.solo_X_bins_vector_of_centers;
 params.fields.bin_size = params.solo.solo_X_bin_size;
 params.fields.bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
 params.fields.ker_SD = 1.5;
@@ -147,24 +127,23 @@ save(param_file_name, '-struct', 'fields_params')
 
 %% parameters for CO analysis basic analysis
 params.co.time_spent_minimum_for_1D_bins=0.2;
-
-params.co.frames_per_second=100;
+params.co.frames_per_second=params.behav.frame_per_second;
 params.co.alpha_val=5;
-params.co.manual_min_dis_from_CO=100; %for manual correction check that the CO is close
-% a. relative time to co
+
+% a. Egocentric time bins: 
 params.co.time_before_after_co=params.behav.time_before_after_co;
-params.co.dis_before_after_co=params.behav.dis_before_after_co;
 params.co.time_X_min= -params.co.time_before_after_co * 1e6;
 params.co.time_X_max=params.co.time_before_after_co * 1e6;
-params.co.time_n_bins = 30;
+params.co.time_n_bins = 30;  
 params.co.time_X_bin_size=(params.co.time_X_max - params.co.time_X_min)/params.co.time_n_bins;
 params.co.time_X_bins_vector=params.co.time_X_min:params.co.time_X_bin_size:params.co.time_X_max;
 params.co.time_X_bins_vector_of_centers=params.co.time_X_bins_vector(1:end-1)+params.co.time_X_bin_size/2;
 
-% b. distance between bats
+% b. Egocentric distance bins
+params.co.dis_before_after_co=params.behav.dis_before_after_co;
 params.co.dis_X_min = -params.co.dis_before_after_co;
 params.co.dis_X_max = params.co.dis_before_after_co;
-params.co.dis_n_bins = params.co.time_n_bins;
+params.co.dis_n_bins = params.co.time_n_bins; %use the same number of bins like in time
 params.co.dis_X_bin_size = (params.co.dis_X_max-params.co.dis_X_min)/params.co.dis_n_bins;
 params.co.dis_X_bins_vector=params.co.dis_X_min:params.co.dis_X_bin_size:params.co.dis_X_max;
 params.co.dis_X_bins_vector_of_centers=params.co.dis_X_bins_vector(1:end-1)+params.co.dis_X_bin_size/2;
@@ -213,7 +192,7 @@ co_params=params.co;
 param_file_name=fullfile(param_folder,'co_params.mat');
 save(param_file_name, '-struct', 'co_params')
 %% Per field params:
-params.per_field.per_field_to_plot=1; %1= width based on half hight 2=width based on 5-95% 3=width based on all spikes
+params.per_field.per_field_to_plot=3; %1= width based on half hight 2=width based on 5-95% 3=width based on all spikes
 params.per_field.time_spent_minimum_for_1D_bins_per_field=0.1;
 params.per_field.frames_per_second=100;
 %bins params:
