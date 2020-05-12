@@ -140,10 +140,10 @@ for ii_dir = 1:2
     for i=0:1
         clf
         if i
-            thresh_used = thresh_half_height{1};
-            co_early = calling_rate(ii_dir).half_height_early{1};
-            co_late = calling_rate(ii_dir).half_height_late{1};
-            rate_inc = rate_inc_half_height{1};
+            thresh_used = thresh_half_height;
+            co_early = calling_rate(ii_dir).half_height_early;
+            co_late = calling_rate(ii_dir).half_height_late;
+            rate_inc = rate_inc_half_height;
             criterion_used = 'half-height criterion';
             
             %                     thresh_used = thresh_deriv;
@@ -152,17 +152,17 @@ for ii_dir = 1:2
             %                     prob = problem_with_deriv;
             %                     criterion_used = ['diff criterion; diff thresh = ' num2str(diff_th)];
         else
-            thresh_used = thresh_solo{1};
-            co_early = calling_rate(ii_dir).solo_early{1};
-            co_late = calling_rate(ii_dir).solo_late{1};
-            rate_inc = rate_inc_solo{1};
+            thresh_used = thresh_solo;
+            co_early = calling_rate(ii_dir).solo_early;
+            co_late = calling_rate(ii_dir).solo_late;
+            rate_inc = rate_inc_solo;
             criterion_used = 'solo criterion';
         end
         hold on
-        plot(x_bins,single_co_smooth{1}(co_early,:),'color',[1 0 0 .5],'LineWidth',0.7)
-        plot(x_bins,single_co_smooth{1}(co_late,:),'color',[0 0 1 .5],'LineWidth',0.7)
-        plot(x_bins,nanmean(single_co_smooth{1}(co_early,:)),'color',[1 0 0 1],'LineWidth',2.5)
-        plot(x_bins,nanmean(single_co_smooth{1}(co_late,:)),'color',[0 0 1 1],'LineWidth',2.5)
+        plot(x_bins,single_co_smooth{jj}(co_early,:),'color',[1 0 0 .5],'LineWidth',0.7)
+        plot(x_bins,single_co_smooth(co_late,:),'color',[0 0 1 .5],'LineWidth',0.7)
+        plot(x_bins,nanmean(single_co_smooth(co_early,:)),'color',[1 0 0 1],'LineWidth',2.5)
+        plot(x_bins,nanmean(single_co_smooth(co_late,:)),'color',[0 0 1 1],'LineWidth',2.5)
         plot(x_bins_up(rate_inc(co_early)),cellfun(@(x,y) x(y),num2cell(single_co_smooth_up{1}(co_early,:),2),num2cell(rate_inc(co_early))),'ro')
         plot(x_bins_up(rate_inc(co_late)),cellfun(@(x,y) x(y),num2cell(single_co_smooth_up{1}(co_late,:),2),num2cell(rate_inc(co_late))),'bo')
         xline(x_bins_up(thresh_used),'--');

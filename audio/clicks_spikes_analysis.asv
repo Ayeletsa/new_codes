@@ -38,10 +38,10 @@ for ii_day = 1:length(all_days)
         continue
     end
     
-%     create_clicks_day_struct(p,clicks_day_struct_name,audio_filt_name,audio_param_file_name,general_behavior_data_file_name,tag_i,behav_struct_name,co_param_file_name,solo_param_file_name,click_detection_folder);
+    create_clicks_day_struct(p,clicks_day_struct_name,audio_filt_name,audio_param_file_name,general_behavior_data_file_name,tag_i,behav_struct_name,co_param_file_name,solo_param_file_name,click_detection_folder);
 
     % 3. calculate calling-rate + 4. divide COs by calling-rate rise time
-    calling_rate = divide_early_late(clicks_day_struct_name,click_rate_folder,name_prefix,co_param_file_name);
+    calling_rate = divide_early_late(clicks_day_struct_name,click_rate_folder,name_prefix);
     calling_rate_struct_name = strrep(clicks_day_struct_name,'clicks_','calling_rate_');
     save(calling_rate_struct_name,'calling_rate')
 end

@@ -263,7 +263,7 @@ clicks_stats
 
 %% find clicks in solo & co + plot them
 % %we do it here because the audio signals are already loaded to the memory
-clicks_struct(1).co = clicks_in_co (bsp_proc_data,behavioral_modes,tag_i,co_param_file_name,clicks_struct,0,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
+clicks_struct(1).co = clicks_in_co (bsp_proc_data,behavioral_modes,tag_i,co_param_file_name,clicks_struct,1,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
 clicks_struct(1).solo = clicks_in_solo (bsp_proc_data,behavioral_modes,tag_i,solo_param_file_name,clicks_struct,1,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
 
 save(clicks_struct_name,'clicks_struct');

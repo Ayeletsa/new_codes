@@ -51,7 +51,7 @@ for ii_dir = 1:2
     calling_rate = zeros(n_flights,1);
     click_intensity_flight = zeros(n_flights,1);
     click_intensity_flight_median = zeros(n_flights,1);
-    clicks_ts_usec_once = cell(n_flights,1);
+    clicks_ts_usec_once = zeros(n_flights,1);
     calling_rate_once = zeros(n_flights,1);
     
     calculate_rate = @(x,y) length(x) ./ (y(end) - y(1)) * us_factor;
@@ -61,7 +61,7 @@ for ii_dir = 1:2
         flight_ind = new_flight_start_ind(ii_flight):new_flight_end_ind(ii_flight);
         bsp_ts_usec{ii_flight} = bsp_during_solo_ts_usec(flight_ind)';
         bsp_x_pos{ii_flight} = bsp_during_solo_x_pos(flight_ind)';
-        clicks_ind = find(clicks_ts >= bsp_ts_usec{ii_flight}(1) & clicks_ts <= bsp_ts_usec{ii_flight}(end));
+        clicks_ind = clicks_ts >= bsp_ts_usec{ii_flight}(1) & clicks_ts <= bsp_ts_usec{ii_flight}(end);
         clicks_ts_usec{ii_flight} = clicks_ts(clicks_ind);
         clicks_x_pos{ii_flight} = interp1(bsp_ts_usec{ii_flight},bsp_x_pos{ii_flight},clicks_ts_usec{ii_flight});
         
@@ -123,8 +123,6 @@ for ii_dir = 1:2
 %     solo(ii_dir).bsp = bsp;
     solo(ii_dir).calling_rate = calling_rate;
     solo(ii_dir).click_intensity = click_intensity_flight;
-    solo(ii_dir).click_intensity_median = click_intensity_flight_median;
-    solo(ii_dir).calling_rate_once = calling_rate_once;
     
 end
 close

@@ -237,33 +237,30 @@ for ii_dir = 1:2
     
     
     %% arrange data in matrices
-    % bsp
-    maxSize = max(cellfun(@numel,bsp_time_to_co));
-    fcn = @(x) [x nan(1,maxSize-numel(x))];
-        % a. time to co
-        rmat = cellfun(fcn,bsp_time_to_co,'UniformOutput',false);
-        bsp.time_to_co = vertcat(rmat{:});
-        % b. relative distance
-        rmat = cellfun(fcn,bsp_dis_m_at_co,'UniformOutput',false);
-        bsp.dis_m = vertcat(rmat{:});
-    
-    % clicks
-    maxSize = max(cellfun(@numel,clicks_time_to_co));
-    fcn = @(x) [x nan(1,maxSize-numel(x))];
-        % a. time to co
-        % clicks_time_from_co(cellfun(@isempty,clicks_time_from_co)) = {nan};
-        rmat = cellfun(fcn,clicks_time_to_co,'UniformOutput',false);
-        clicks.time_to_co = vertcat(rmat{:});
-        % b. relative distance
-        % clicks_dis_m_at_co(cellfun(@isempty,clicks_dis_m_at_co)) = {nan};
-        rmat = cellfun(fcn,clicks_dis_m_at_co,'UniformOutput',false);
-        clicks.dis_m = vertcat(rmat{:});
-        % c. intensity
-        rmat = cellfun(fcn,clicks_intensity_at_co,'UniformOutput',false);
-        clicks.intensity = vertcat(rmat{:});
-        % single clicks
-        rmat = cellfun(fcn,clicks_not_DC_flag_co,'UniformOutput',false);
-        clicks.not_DC = vertcat(rmat{:});
+%     % bsp
+%     maxSize = max(cellfun(@numel,bsp_time_to_co));
+%     fcn = @(x) [x nan(1,maxSize-numel(x))];
+%         % a. time to co
+%         rmat = cellfun(fcn,bsp_time_to_co,'UniformOutput',false);
+%         bsp.time_to_co = vertcat(rmat{:});
+%         % b. relative distance
+%         rmat = cellfun(fcn,bsp_dis_m_at_co,'UniformOutput',false);
+%         bsp.dis_m = vertcat(rmat{:});
+%     
+%     % clicks
+%     maxSize = max(cellfun(@numel,clicks_time_to_co));
+%     fcn = @(x) [x nan(1,maxSize-numel(x))];
+%         % a. time to co
+%         % clicks_time_from_co(cellfun(@isempty,clicks_time_from_co)) = {nan};
+%         rmat = cellfun(fcn,clicks_time_to_co,'UniformOutput',false);
+%         clicks.time_to_co = vertcat(rmat{:});
+%         % b. relative distance
+%         % clicks_dis_m_at_co(cellfun(@isempty,clicks_dis_m_at_co)) = {nan};
+%         rmat = cellfun(fcn,clicks_dis_m_at_co,'UniformOutput',false);
+%         clicks.dis_m = vertcat(rmat{:});
+%         % c. intensity
+%         rmat = cellfun(fcn,clicks_intensity_at_co,'UniformOutput',false);
+%         clicks.intensity = vertcat(rmat{:});
     
     %% calculate calling rate
 %     % 1. mean:
@@ -338,7 +335,7 @@ for ii_dir = 1:2
     
     
     %% save struct
-%     co(ii_dir).clicks_ind = clicks_ind_from_total;
+    co(ii_dir).clicks_ind = clicks_ind_from_total;
     co(ii_dir).clicks = clicks;
     co(ii_dir).bsp = bsp;
     co(ii_dir).calling_rate = calling_rate;
