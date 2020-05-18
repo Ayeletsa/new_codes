@@ -41,7 +41,7 @@ for field_i=1:size(field_edges,2)
         
         %per field solo variability:
         %===================================
-        per_field(field_i).solo_firing_rates_time_bins=per_field_solo_variability(field_edges,solo_data,time_X_bin_size,frames_per_second);
+        per_field(field_i).solo_firing_rates_time_bins=per_field_solo_variability(field_edges,solo_data,time_per_field_X_bin_size,frames_per_second);
     else
         per_field(field_i).tuning_time_fr_per_field=nan;
         per_field(field_i).tuning_dis_x_fr_per_field=nan;
