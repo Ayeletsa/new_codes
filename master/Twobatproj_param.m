@@ -2,9 +2,9 @@ function Twobatproj_param(param_folder)
 
 %% folders:
 % data input:
-params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
+%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
 %params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
-
+params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2299';
 % data output:
 main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
 params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
@@ -49,7 +49,7 @@ params.behav.dis_before_after_co = 40; % in meters
 
 %% parameters for behavioral modes
 params.behav.load_struct=1; %1 if you want to load behavioral struct
-params.behav.correct_manually=1;
+params.behav.correct_manually=0;
 params.behav.frame_per_second=100;
 params.behav.min_solo_length=2*params.behav.frame_per_second; %samples
 params.behav.min_tracking_length=3*params.behav.frame_per_second; %samples
@@ -77,7 +77,7 @@ save(param_file_name, '-struct', 'behav_params')
 tunnel_limits=[0 135];
 params.solo.solo_X_min= tunnel_limits(1);
 params.solo.solo_X_max= tunnel_limits(2);
-params.solo.solo_X_n_bins = params.solo.solo_X_max * 2;
+params.solo.solo_X_n_bins = params.solo.solo_X_max * 2; %0.5 meter bin
 params.solo.solo_X_bin_size = (params.solo.solo_X_max-params.solo.solo_X_min)/params.solo.solo_X_n_bins;
 params.solo.solo_X_bins_vector=params.solo.solo_X_min:params.solo.solo_X_bin_size:params.solo.solo_X_max;
 params.solo.solo_X_bins_vector_of_centers=params.solo.solo_X_bins_vector(1:end-1)+params.solo.solo_X_bin_size/2;
@@ -134,7 +134,7 @@ params.co.alpha_val=5;
 params.co.time_before_after_co=params.behav.time_before_after_co;
 params.co.time_X_min= -params.co.time_before_after_co * 1e6;
 params.co.time_X_max=params.co.time_before_after_co * 1e6;
-params.co.time_n_bins = 30;  
+params.co.time_n_bins = 40;  
 params.co.time_X_bin_size=(params.co.time_X_max - params.co.time_X_min)/params.co.time_n_bins;
 params.co.time_X_bins_vector=params.co.time_X_min:params.co.time_X_bin_size:params.co.time_X_max;
 params.co.time_X_bins_vector_of_centers=params.co.time_X_bins_vector(1:end-1)+params.co.time_X_bin_size/2;
@@ -148,45 +148,23 @@ params.co.dis_X_bin_size = (params.co.dis_X_max-params.co.dis_X_min)/params.co.d
 params.co.dis_X_bins_vector=params.co.dis_X_min:params.co.dis_X_bin_size:params.co.dis_X_max;
 params.co.dis_X_bins_vector_of_centers=params.co.dis_X_bins_vector(1:end-1)+params.co.dis_X_bin_size/2;
 
-%c. allocentric during CO
-params.co.allo_X_min= 0;
-params.co.allo_X_max= 135;
-params.co.allo_X_n_bins = params.co.allo_X_max * 2;
-params.co.allo_X_bin_size = (params.co.allo_X_max-params.co.allo_X_min)/params.co.allo_X_n_bins;
-params.co.allo_X_bins_vector=params.co.allo_X_min:params.co.allo_X_bin_size:params.co.allo_X_max;
-params.co.allo_X_bins_vector_of_centers=params.co.allo_X_bins_vector(1:end-1)+params.co.allo_X_bin_size/2;
-
 %d. significant differnce between co and solo allocentric representation
 params.co.sig_bins_width = 3;
 params.co.min_flights_per_bin = 3;
-
+params.co.tunnel_end=tunnel_limits(2);
 %e. 2D tuning distance vs allocentric (trying few different bin sizes)
 params.co.allo_X_bin_size_2D=3; %changded to 3 meter
 params.co.dis_X_bin_size_2D=3; %changded to 3 meter
-
-params.co.allo_X_bins_vector_2D=params.co.allo_X_min:params.co.allo_X_bin_size_2D:params.co.allo_X_max;
+n_bins=round((params.co.dis_X_max-params.co.dis_X_min)/params.co.dis_X_bin_size_2D);
+params.co.allo_X_bins_vector_2D=tunnel_limits(1):params.co.allo_X_bin_size_2D:tunnel_limits(2);
 params.co.allo_X_bins_vector_of_centers_2D=params.co.allo_X_bins_vector_2D(1:end-1)+params.co.allo_X_bin_size_2D/2;
-params.co.dis_X_bins_vector_2D=linspace(params.co.dis_X_min,params.co.dis_X_max,27);
+params.co.dis_X_bins_vector_2D=linspace(params.co.dis_X_min,params.co.dis_X_max,n_bins);
 params.co.dis_X_bins_vector_of_centers_2D=params.co.dis_X_bins_vector_2D(1:end-1)+params.co.dis_X_bin_size_2D/2;
-
-
-params.co.time_spent_minimum_for_2D_bins=0.2; %test this
+params.co.time_spent_minimum_for_2D_bins=0.2; 
 params.co.sigma_a=1.5;
 params.co.hsize=5*round(params.co.sigma_a)+1;
 params.co.legalize_by_neighbor_bins_flag=1;
 
-% params
-params.co.n_time_spent_bins = 8;
-params.co. tunnel_end = 135;
-params.co.time_spent_criteria = params.co.time_spent_minimum_for_1D_bins/2;
-
-% ego and allo bins edges
-params.co.ego_bins_width = params.co.dis_before_after_co*2/params.co.n_time_spent_bins;
-params.co.ego_bins_edges = -params.co.dis_before_after_co:params.co.ego_bins_width:params.co.dis_before_after_co;
-params.co.allo_bins_width = params.co.tunnel_end/params.co.n_time_spent_bins;
-params.co.allo_bins_edges = params.co.tunnel_end:-params.co.allo_bins_width:0;
-%per field
-params.co.width_at_heigth=50;%width of per field
 %save
 co_params=params.co;
 param_file_name=fullfile(param_folder,'co_params.mat');
@@ -196,10 +174,25 @@ params.per_field.per_field_to_plot=3; %1= width based on half hight 2=width base
 params.per_field.time_spent_minimum_for_1D_bins_per_field=0.1;
 params.per_field.frames_per_second=100;
 %bins params:
-params.per_field.n_bins=30;
-params.per_field.time_X_bin_size=params.co.time_X_bin_size;
-params.per_field.dis_per_field_bin_vec_of_center=params.co.dis_X_bins_vector_of_centers;
-params.per_field.time_per_field_bin_vec_of_center=params.co.time_X_bins_vector_of_centers;
+params.per_field.time_before_after_co=params.behav.time_before_after_co;
+params.per_field.time_X_min= -params.per_field.time_before_after_co * 1e6;
+params.per_field.time_X_max=params.per_field.time_before_after_co * 1e6;
+params.per_field.time_per_field_n_bins = 30;  
+params.per_field.time_per_field_X_bin_size=(params.per_field.time_X_max - params.per_field.time_X_min)/params.per_field.time_per_field_n_bins;
+params.per_field.time_per_field_X_bins_vector=params.per_field.time_X_min:params.per_field.time_per_field_X_bin_size:params.per_field.time_X_max;
+params.per_field.time_per_field_bin_vec_of_center=params.per_field.time_per_field_X_bins_vector(1:end-1)+params.per_field.time_per_field_X_bin_size/2;
+
+% b. Egocentric distance bins
+params.per_field.dis_before_after_co=params.behav.dis_before_after_co;
+params.per_field.dis_X_min = -params.per_field.dis_before_after_co;
+params.per_field.dis_X_max = params.per_field.dis_before_after_co;
+params.per_field.dis_per_field_n_bins = params.per_field.time_per_field_n_bins; %use the same number of bins like in time
+params.per_field.dis_per_field_X_bin_size = (params.per_field.dis_X_max-params.per_field.dis_X_min)/params.per_field.dis_per_field_n_bins;
+params.per_field.dis_per_field_X_bins_vector=params.per_field.dis_X_min:params.per_field.dis_per_field_X_bin_size:params.per_field.dis_X_max;
+params.per_field.dis_per_field_bin_vec_of_center=params.per_field.dis_per_field_X_bins_vector(1:end-1)+params.per_field.dis_per_field_X_bin_size/2;
+
+params.per_field.n_bins=params.per_field.time_per_field_X_bins_vector;
+
 %shuffle:
 params.per_field.alpha_val=5;
 params.per_field.num_shuffles_per_field=1000;
@@ -225,12 +218,7 @@ params.co_shuffle.frames_per_second=params.co.frames_per_second;
 params.co_shuffle.alpha_val=5; %
 
 % b. egocentric parameters
-params.co_shuffle.dis_X_min = params.co.dis_X_min;
-params.co_shuffle.dis_X_max = -params.co.dis_X_min;
-params.co_shuffle.dis_n_bins = 40;
-params.co_shuffle.dis_X_bin_size = (params.co_shuffle.dis_X_max-params.co_shuffle.dis_X_min)/params.co_shuffle.dis_n_bins;
-params.co_shuffle.dis_X_bins_vector=params.co_shuffle.dis_X_min:params.co_shuffle.dis_X_bin_size:params.co_shuffle.dis_X_max;
-params.co_shuffle.dis_X_bins_vector_of_centers=params.co_shuffle.dis_X_bins_vector(1:end-1)+params.co_shuffle.dis_X_bin_size/2;
+params.co_shuffle.dis_X_bins_vector_of_centers=params.co.dis_X_bins_vector_of_centers;
 
 % c. coherence parameters (wider bins)
 params.co_shuffle.coherence_X_min = params.co.dis_X_min;
@@ -241,19 +229,26 @@ params.co_shuffle.coherence_X_bins_vector=params.co_shuffle.coherence_X_min:para
 params.co_shuffle.coherence_X_bins_vector_of_centers=params.co_shuffle.coherence_X_bins_vector(1:end-1)+params.co_shuffle.coherence_X_bin_size/2;
 
 % d. allocentric parameters
+params.co_shuffle.bin_centers=params.solo.solo_X_bins_vector_of_centers;
 params.co_shuffle.allo_bin_size = params.solo.solo_X_bin_size;
 params.co_shuffle.allo_bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
-params.co_shuffle.ker_SD=params.fields.ker_SD;
-params.co_shuffle.tunnel_limits = [0 135];
-params.co_shuffle.pos_X_min = params.co_shuffle.tunnel_limits(1);
-params.co_shuffle.pos_X_max = params.co_shuffle.tunnel_limits(2);
-params.co_shuffle.pos_n_bins = 240;
-params.co_shuffle.pos_X_bin_size = (params.co_shuffle.pos_X_max-params.co_shuffle.pos_X_min)/params.co_shuffle.pos_n_bins;
-params.co_shuffle.pos_X_bins_vector=params.co_shuffle.pos_X_min:params.co_shuffle.pos_X_bin_size:params.co_shuffle.pos_X_max;
-params.co_shuffle.pos_X_bins_vector_of_centers=params.co_shuffle.pos_X_bins_vector(1:end-1)+params.co_shuffle.pos_X_bin_size/2;
+params.co_shuffle.ker_SD = 1.5;
+params.co_shuffle.min_time_spent_per_meter = params.solo.solo_time_spent_minimum_for_1D_bins;
+params.co_shuffle.ker_type = 'gaussian';
+params.co_shuffle.pos_X_bins_vector_of_centers=params.co_shuffle.bin_centers;
+% params.co_shuffle.allo_bin_size = params.solo.solo_X_bin_size;
+% params.co_shuffle.allo_bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
+% params.co_shuffle.ker_SD=params.fields.ker_SD;
+% params.co_shuffle.tunnel_limits = tunnel_limits;
+% params.co_shuffle.pos_X_min = params.co_shuffle.tunnel_limits(1);
+% params.co_shuffle.pos_X_max = params.co_shuffle.tunnel_limits(2);
+% params.co_shuffle.pos_n_bins = 240;
+% params.co_shuffle.pos_X_bin_size = (params.co_shuffle.pos_X_max-params.co_shuffle.pos_X_min)/params.co_shuffle.pos_n_bins;
+% params.co_shuffle.pos_X_bins_vector=params.co_shuffle.pos_X_min:params.co_shuffle.pos_X_bin_size:params.co_shuffle.pos_X_max;
+% params.co_shuffle.pos_X_bins_vector_of_centers=params.co_shuffle.pos_X_bins_vector(1:end-1)+params.co_shuffle.pos_X_bin_size/2;
 
 
-%% shuffling parameters
+%shuffling parameters
 params.co_shuffle.co_shuffle_folder_name = params.dirs.co_shuffle_folder_name;
 
 params.co_shuffle.n_shuffles =1000;
@@ -280,5 +275,43 @@ co_population_params=params.co_population;
 param_file_name=fullfile(param_folder,'co_population_params.mat');
 save(param_file_name, '-struct', 'co_population_params')
 
+
+%% population vector params:
+params.population_vector.n_shuffles=100;%temp
+
+%cell selection:
+params.population_vector.SI_threshold=1;
+params.population_vector.min_n_spike=[100];
+params.population_vector.solo_time_spent_minimum_for_1D_bins=0.03;%need to check!
+
+%egocentric bins:
+params.population_vector.ego_range=[-40 40];
+params.population_vector.window=10;
+params.population_vector.step=2;
+params.population_vector.ego_bin_start=params.population_vector.ego_range(1):params.population_vector.step:params.population_vector.ego_range(2)-params.population_vector.window;
+params.population_vector.ego_bin_end=params.population_vector.ego_range(1)+params.population_vector.window:params.population_vector.step:params.population_vector.ego_range(2);
+params.population_vector.ego_bin_center=[params.population_vector.ego_bin_start+params.population_vector.ego_bin_end]./2;
+params.population_vector.ego_bin_dis=params.population_vector.ego_range(1):params.population_vector.step:params.population_vector.ego_range(2);
+%data in y:
+params.population_vector.run_only_on_intersent_data=0;
+%params.population_vector.full_data=0;
+
+%allocentric tuning params:
+params.population_vector.allo_X_bin_size = 1;%meter
+params.population_vector.allo_X_min= tunnel_limits(1);
+params.population_vector.allo_X_max= tunnel_limits(2);
+params.population_vector.allo_X_n_bins = params.solo.solo_X_max; %1 meter bin
+params.population_vector.allo_X_bin_size = (params.population_vector.allo_X_max-params.population_vector.allo_X_min)/params.population_vector.allo_X_n_bins;
+params.population_vector.allo_X_bins_vector=params.population_vector.allo_X_min:params.population_vector.allo_X_bin_size:params.population_vector.allo_X_max;
+params.population_vector.allo_X_bins_vector_of_centers=params.population_vector.allo_X_bins_vector(1:end-1)+params.population_vector.allo_X_bin_size/2;
+params.population_vector.allo_time_spent_minimum_for_1D_bins=0.03;
+params.population_vector.frames_per_second=params.behav.frame_per_second;
+params.population_vector.ker_SD=params.fields.ker_SD;
+
+
+%save
+population_vector_params=params.population_vector;
+param_file_name=fullfile(param_folder,'population_vector_params.mat');
+save(param_file_name, '-struct', 'population_vector_params')
 
 
