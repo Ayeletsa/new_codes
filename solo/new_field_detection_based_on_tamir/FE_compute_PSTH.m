@@ -4,7 +4,7 @@ function FE_PSTH = FE_compute_PSTH(FE,prm)
 if isempty(FE)
     pos_fs = 100;
 else
-    pos_fs = 1e6/median(diff([FE.ts]));
+    pos_fs = 1e6/nanmedian(diff([FE.ts]));
 end
 
 %%
