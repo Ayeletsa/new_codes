@@ -233,9 +233,9 @@ for ii_cell = 3:length(behavior_struct_names)
                     axes(co_ax{3})
                     hold on
                     plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
-                    plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos(1,:),behavior_struct.co(ii_dir).firing_rate.solo_x_pos(2,:),'color',solo_colors{ii_dir},'LineWidth',2);
+                    plot(behavior_struct.solo(ii_dir).PSTH_for_field_detection,behavior_struct.solo(1).x_pos_firing_rate{1, 2},'color',solo_colors{ii_dir},'LineWidth',2);
                     plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(1,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                    max_x = round(max([max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos(1,:)),max(max(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate))])*1.1*10) / 10;
+                    max_x = round(max([max(behavior_struct.solo(ii_dir).PSTH_for_field_detection),max(max(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate))])*1.1*10) / 10;
                     if max_x~=0
                         set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                     end
@@ -299,7 +299,7 @@ for ii_cell = 3:length(behavior_struct_names)
                         SI_field=behavior_struct.solo(ii_dir).fields(field_i).field_SI;
                         perc_flight_with_spike=100*(behavior_struct.solo(ii_dir).fields(field_i).num_flights_with_spikes/behavior_struct.solo(ii_dir).fields(field_i).FE_field_pass_num);
                         
-                        text((behavior_struct.solo(ii_dir).field_height(field_i))*1.05,behavior_struct.solo(ii_dir).field_center(field_i),sprintf('%.1f Hz, SI=%.1f, %.1f%%',peak_fr,SI_field,(perc_flight_with_spike)));
+                        text((behavior_struct.solo(ii_dir).field_height(field_i))*1.05,behavior_struct.solo(ii_dir).field_center(field_i),sprintf('%.1f Hz, SI=%.2f, %.1f%%',peak_fr,SI_field,(perc_flight_with_spike)));
                     end
                     box off
                     
@@ -358,20 +358,20 @@ for ii_cell = 3:length(behavior_struct_names)
                     box off
                     
                     
-                    % solo firing rate -  bins as 2D
-                    axes(co_ax{18})
-                    hold on
-                    %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
-                    plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D,allo_X_bins_vector_of_centers_2D,'color',solo_colors{ii_dir},'LineWidth',2);
-                    %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                    max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D) );
-                    if max_x~=0
-                        set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
-                    end
-                    str = sprintf('Hz');
-                    xlabel(str,'fontsize',fsize)
-                    box off
-                    
+%                     % solo firing rate -  bins as 2D
+%                     axes(co_ax{18})
+%                     hold on
+%                     %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
+%                     plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D,allo_X_bins_vector_of_centers_2D,'color',solo_colors{ii_dir},'LineWidth',2);
+%                     %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
+%                     max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D) );
+%                     if max_x~=0
+%                         set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
+%                     end
+%                     str = sprintf('Hz');
+%                     xlabel(str,'fontsize',fsize)
+%                     box off
+%                     
                     % solo firing rate - regular bins
                     axes(co_ax{19})
                     hold on
@@ -442,8 +442,8 @@ for ii_cell = 3:length(behavior_struct_names)
                             axes('units','normalized','Position',[0.33+dir_adj y_pos 0.12 0.05]);
                             [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
                             if max(ind_length)>=0.5*length(r)
-                                bins_center=time_X_bins_vector_of_centers;
-                                bins=time_X_bins_vector;
+                                bins_center=time_per_field_bin_vec_of_center;
+                                bins=time_per_field_X_bins_vector;
                                 time_signif_field=per_field(fr_i).time_signif_field;
                                 shuf_data=per_field(fr_i).time_signif_field.shuffled_data;
                                 
