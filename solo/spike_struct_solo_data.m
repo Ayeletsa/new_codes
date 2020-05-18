@@ -114,7 +114,7 @@ for ii_dir = 1:2
     if ~isempty(not_nan_spikes_x_pos)
         FR_map.PSTH=FE_PSTH.PSTH;
         FR_map.bin_centers=solo_X_bins_vector_of_centers;
-        FR_map.bin_size=solo_X_bin_size;
+        FR_map.bin_size=prm.fields.bin_size;
 %         data=[bsp_x_pos';bsp_ts_usec';spikes_x_pos';spikes_ts_usec'];
 %         field_names={'pos','ts','spikes_pos','spikes_ts'};
 %         FE=cell2struct(data,field_names,1);
