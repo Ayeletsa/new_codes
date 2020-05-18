@@ -92,14 +92,23 @@ for ii_cell = 3:length(behavior_struct_names)
             bsp_x_pos_vec = behavior_struct.co(ii_dir).bsp.x_pos(:);
             bsp_x_pos_vec = bsp_x_pos_vec(~isnan(bsp_x_pos_vec));
             
-            [allo_time_spent_in_bins, ~, ~, allo_firing_rate_mat(ii_shuffle,:), ~,~] ...
-                = fn_compute_generic_1D_tuning_new_smooth ...
-                (bsp_x_pos_vec,spikes_x_pos_vec, pos_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+            bin_size = allo_bin_size;
+            bin_limits = allo_bin_limits;
+            bin_edges = bin_limits(1):bin_size:bin_limits(end);
+            bin_centers = (bin_edges(1:end-1)+bin_edges(2:end))./2;
+           
             
+            [allo_firing_rate_mat(ii_shuffle,:),spike_density,allo_time_spent_in_bins] = computePSTH(bsp_x_pos_vec,frames_per_second,spikes_x_pos_vec,bin_edges,time_spent_minimum_for_1D_bins,ker_SD);
+            [information_per_spike_allo_vec(ii_shuffle), SI_bits_sec] = computeSI(allo_firing_rate_mat(ii_shuffle,:),allo_time_spent_in_bins);
+
+%             [allo_time_spent_in_bins, ~, ~, allo_firing_rate_mat(ii_shuffle,:), ~,~] ...
+%                 = fn_compute_generic_1D_tuning_new_smooth ...
+%                 (bsp_x_pos_vec,spikes_x_pos_vec, pos_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+%             
             %  b.2.e. allocentric information
-            fr_nan_ind = isnan(allo_firing_rate_mat(ii_shuffle,:));
-            information_per_spike_allo_vec(ii_shuffle) = spikes_information ( allo_firing_rate_mat(ii_shuffle,~fr_nan_ind), allo_time_spent_in_bins(~fr_nan_ind));
-            
+%             fr_nan_ind = isnan(allo_firing_rate_mat(ii_shuffle,:));
+%             information_per_spike_allo_vec(ii_shuffle) = spikes_information ( allo_firing_rate_mat(ii_shuffle,~fr_nan_ind), allo_time_spent_in_bins(~fr_nan_ind));
+%             
         end
         
         %%%%  TO DO!! I think the calculation of p value and significant test could
