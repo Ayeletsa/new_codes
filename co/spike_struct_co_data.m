@@ -224,11 +224,14 @@ for ii_dir = 1:2
     FE_PSTH = FE_compute_PSTH(FE,prm);
     allo_co_x_pos_fr=FE_PSTH.PSTH;
     
-    %     [~, ~, ~, allo_co_x_pos_fr, ~,~] ...
-    %         = fn_compute_generic_1D_tuning_new_smooth ...
-    %         (bsp_vec,spikes_vec,allo_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-    %
     firing_rate.allo_x_pos = [allo_co_x_pos_fr;prm.fields.bin_centers];
+    % compute field detection on allo during co:
+    FR_map.PSTH=FE_PSTH.PSTH;
+    FR_map.bin_centers=prm.fields.bin_centers;
+    FR_map.bin_size=prm.fields.bin_size;
+    
+    fields=detect_field_based_on_tamir(FR_map,FE,prm) ;
+    co(ii_dir).allo_fields_during_co=fields;
     %
     %
     
@@ -306,23 +309,37 @@ for ii_dir = 1:2
     co(ii_dir).per_field_prc=per_field_prc;
     co(ii_dir).per_field_all_spk=per_field_all_spk;
     %% Inter field analysis:
+    %1. Find if there are fields in co and not in solo:
+    %-------------------------------------------------------
+    if ~isempty(co(ii_dir).allo_fields_during_co)
+        peak_allo_co_loc=[co(ii_dir).allo_fields_during_co.loc];
+        solo_edges=reshape([fields.edges_href],2,length([fields.edges_href])/2);
+        
+        for f_i=1:length(peak_allo_co_loc)
+            de_novo_fields=isempty(find(peak_allo_co_loc(f_i)>solo_edges(1,:) & peak_allo_co_loc(f_i)<solo_edges(2,:)));
+            co(ii_dir).allo_fields_during_co(f_i).de_novo_fields=de_novo_fields;
+        end
+        
+    end
+    %2. find inter fields:
+    %-------------------------------------------------------
     
     if ~isempty(fields)
         field_edges=reshape([fields.edges_href],2,length([fields.edges_href])/2); %for now run on href
         new_field_edges=[];
         inter_field_edge=[];
-        %1. enlarge field size by 50% to each side
+        %a. enlarge field size by 50% to each side
         field_sizes=[fields.width_href];
         new_field_edges(1,:)=field_edges(1,:)-0.5.*field_sizes;
         new_field_edges(2,:)=field_edges(2,:)+0.5.*field_sizes;
-        %2. define interfield edges
+        %b. define interfield edges
         inter_field_edge(1,:)=[0, new_field_edges(2,:)];
         inter_field_edge(2,:)=[new_field_edges(1,:), tunnel_end];
-        %3. find if fields were merged
+        %c. find if fields were merged
         if size(inter_field_edge,2)>1
             inter_field_edge=inter_field_edge(:,inter_field_edge(2,:)>inter_field_edge(1,:));
         end
-        %4. run over inter field pos
+        %d. run over inter field pos
         if ~isempty(inter_field_edge)
             inter_field=per_field_analysis(inter_field_edge,spikes,bsp,per_field_params_file_name,solo_data(ii_dir));
         else
@@ -330,6 +347,30 @@ for ii_dir = 1:2
             
         end
         
+        for inter_field_i=1:size(inter_field_edge,2)
+             %e. compare solo and co allo tuning within inter field:
+
+            x_pos_bin_limits=[inter_field_edge(1,inter_field_i),inter_field_edge(2,inter_field_i)];
+            solo_bsp_x_pos = solo_data(ii_dir).bsp.x_pos;
+            solo_spikes_x_pos = solo_data(ii_dir).spikes.x_pos;
+            co_bsp_x_pos=bsp.x_pos;
+            co_spikes_x_pos=spikes.x_pos;
+            solo_co_comparison=allo_co_solo_comparison(x_pos_bin_limits,sig_bins_width,solo_bsp_x_pos,solo_spikes_x_pos,co_bsp_x_pos,co_spikes_x_pos,frames_per_second,min_flights_per_bin);
+            inter_field(inter_field_i).solo_co_comparison=solo_co_comparison;
+            
+            % compute SI and firing rate per inter field
+             pos = solo_data(ii_dir).bsp.x_pos(solo_data(ii_dir).bsp.x_pos>x_pos_bin_limits(1) & solo_data(ii_dir).bsp.x_pos<x_pos_bin_limits(2)) ;
+             spikes_pos=solo_data(ii_dir).spikes.x_pos(solo_data(ii_dir).spikes.x_pos>x_pos_bin_limits(1) & solo_data(ii_dir).spikes.x_pos<x_pos_bin_limits(2)) ;
+             pos_fs=frames_per_second;
+             bin_edges=prm.fields.bin_edges;
+             min_time_spent_per_bin=prm.fields.min_time_spent_per_meter;
+             ker_SD=prm.fields.ker_SD;
+            [PSTH,spike_density,time_spent] = computePSTH(pos,pos_fs,spikes_pos,bin_edges,min_time_spent_per_bin,ker_SD);
+            [SI_bits_spike, SI_bits_sec] = computeSI(PSTH,time_spent);
+            inter_field(inter_field_i).SI_during_solo=SI_bits_spike;
+            inter_field(inter_field_i).tuning_during_solo=PSTH;
+            inter_field(inter_field_i).solo_fr=pos_fs*(length(spikes_pos)./length(pos));
+        end
     else
         inter_field=struct();
     end
@@ -338,78 +379,87 @@ for ii_dir = 1:2
     %%  calculate significante diff between co and solo allocentric representation
     % as for the obstacle - divide the tunnel into bins and compare
     % population of firing rats between CO and Solo
-    
-    % create bins only where you have behavioral coverage during CO
-    allo_fr_ind = find(isfinite(co(ii_dir).firing_rate.allo_x_pos(1,:))); % find where we could calculate allocantric firing rate
-    if ~isempty(allo_fr_ind)
-    allo_fr_limits_ind = [allo_fr_ind(1) allo_fr_ind(end)];
-    allo_fr_limits = co(ii_dir).firing_rate.allo_x_pos(2,allo_fr_limits_ind);
-    allo_bin_width = mean(diff(co(ii_dir).firing_rate.allo_x_pos(2,:))); % use the same bins width as during allocentric tuning curve calculation
-    x_pos_bin_limits = [allo_fr_limits(1)-allo_bin_width/2,allo_fr_limits(2)-allo_bin_width/2];
-    % because all bins are in a fixed width, calculate where exactly to begin and end the comparison
-    x_pos_mod = mod(diff(x_pos_bin_limits),sig_bins_width);
-    sig_bins_limits = x_pos_bin_limits(1)-x_pos_mod/2:sig_bins_width:x_pos_bin_limits(2)+x_pos_mod;
-    n_bins = length(sig_bins_limits) - 1;
-    %load solo data:
+    non_nan_ind=find(isfinite(co(ii_dir).firing_rate.allo_x_pos(1,:))); %this define the area of the analysis
+    x_pos_bin_limits=[min(prm.fields.bin_centers(non_nan_ind)), max(prm.fields.bin_centers(non_nan_ind))];
     solo_bsp_x_pos = solo_data(ii_dir).bsp.x_pos;
     solo_spikes_x_pos = solo_data(ii_dir).spikes.x_pos;
+    co_bsp_x_pos=bsp.x_pos;
+    co_spikes_x_pos=spikes.x_pos;
+    solo_co_comparison=allo_co_solo_comparison(x_pos_bin_limits,sig_bins_width,solo_bsp_x_pos,solo_spikes_x_pos,co_bsp_x_pos,co_spikes_x_pos,frames_per_second,min_flights_per_bin);
+    co(ii_dir).solo_co_comparison=solo_co_comparison;
     
-    
-    % create empty variables
-    p_fr = zeros(1,n_bins);
-    diff_mean_fr = zeros(1,n_bins);
-    n_solo_flights = size(solo_bsp_x_pos,1);
-    
-    % for every bin, check if CO firing rate is significantly different
-    % from SOLO firing rate
-    for ii_bin = 1:n_bins
-        
-        bin_start = sig_bins_limits(ii_bin);
-        bin_end = sig_bins_limits(ii_bin+1);
-        solo_fr_at_bin = zeros(1,n_solo_flights);
-        co_fr_at_bin = zeros(1,n_co_points);
-        
-        %for every solo flight, calculate firing rate at bin
-        for ii_solo_flight = 1:n_solo_flights
-            solo_bsp_at_flight = solo_bsp_x_pos(ii_solo_flight,:);
-            n_bsp_at_bin = sum(bin_start <= solo_bsp_at_flight & solo_bsp_at_flight < bin_end);
-            solo_spikes_at_flight = solo_spikes_x_pos(ii_solo_flight,:);
-            n_spikes_at_bin = sum(bin_start <= solo_spikes_at_flight & solo_spikes_at_flight < bin_end);
-            solo_fr_at_bin(ii_solo_flight) = (n_spikes_at_bin/n_bsp_at_bin) * frames_per_second;
-        end
-        
-        %for every cross-over, calculate firing rate at bin
-        for ii_co_flight = 1:n_co_points
-            co_bsp_at_flight = bsp.x_pos(ii_co_flight,:);
-            n_bsp_at_bin = sum(bin_start <= co_bsp_at_flight & co_bsp_at_flight < bin_end);
-            co_spikes_at_flight = spikes.x_pos(ii_co_flight,:);
-            n_spikes_at_bin = sum(bin_start <= co_spikes_at_flight & co_spikes_at_flight < bin_end);
-            co_fr_at_bin(ii_co_flight) = (n_spikes_at_bin/n_bsp_at_bin) * frames_per_second;
-        end
-        
-        solo_fr_at_bin = solo_fr_at_bin(isfinite(solo_fr_at_bin));
-        co_fr_at_bin = co_fr_at_bin(isfinite(co_fr_at_bin));
-        % calculate p only for bins with more than n flights
-        if length(co_fr_at_bin) >= min_flights_per_bin
-            [~,p_fr(ii_bin)] = ttest2(solo_fr_at_bin,co_fr_at_bin);
-            diff_mean_fr(ii_bin) = mean(solo_fr_at_bin) - mean(co_fr_at_bin);
-        else
-            p_fr(ii_bin) = nan;
-            diff_mean_fr(ii_bin) = nan;
-        end
-        
-        solo_co_comparison.p_diff_firing_rate = p_fr;
-        solo_co_comparison.diff_mean_firing_rate = diff_mean_fr;
-        sig_bins_centers = sig_bins_limits(1:end-1) + sig_bins_width/2;
-        solo_co_comparison.bin_centers = sig_bins_centers;
-        solo_co_comparison.n_bins = n_bins;
-        
-        co(ii_dir).solo_co_comparison = solo_co_comparison;
-        
-    end
-    else
-       co(ii_dir).solo_co_comparison.n_bins=0; 
-    end
+    %     % create bins only where you have behavioral coverage during CO
+    %     allo_fr_ind = find(isfinite(co(ii_dir).firing_rate.allo_x_pos(1,:))); % find where we could calculate allocantric firing rate
+    %     if ~isempty(allo_fr_ind)
+    %     allo_fr_limits_ind = [allo_fr_ind(1) allo_fr_ind(end)];
+    %     allo_fr_limits = co(ii_dir).firing_rate.allo_x_pos(2,allo_fr_limits_ind);
+    %     allo_bin_width = mean(diff(co(ii_dir).firing_rate.allo_x_pos(2,:))); % use the same bins width as during allocentric tuning curve calculation
+    %     x_pos_bin_limits = [allo_fr_limits(1)-allo_bin_width/2,allo_fr_limits(2)-allo_bin_width/2];
+    %     % because all bins are in a fixed width, calculate where exactly to begin and end the comparison
+    %     x_pos_mod = mod(diff(x_pos_bin_limits),sig_bins_width);
+    %     sig_bins_limits = x_pos_bin_limits(1)-x_pos_mod/2:sig_bins_width:x_pos_bin_limits(2)+x_pos_mod;
+    %     n_bins = length(sig_bins_limits) - 1;
+    %     %load solo data:
+    %     solo_bsp_x_pos = solo_data(ii_dir).bsp.x_pos;
+    %     solo_spikes_x_pos = solo_data(ii_dir).spikes.x_pos;
+    %
+    %
+    %     % create empty variables
+    %     p_fr = zeros(1,n_bins);
+    %     diff_mean_fr = zeros(1,n_bins);
+    %     n_solo_flights = size(solo_bsp_x_pos,1);
+    %
+    %     % for every bin, check if CO firing rate is significantly different
+    %     % from SOLO firing rate
+    %     for ii_bin = 1:n_bins
+    %
+    %         bin_start = sig_bins_limits(ii_bin);
+    %         bin_end = sig_bins_limits(ii_bin+1);
+    %         solo_fr_at_bin = zeros(1,n_solo_flights);
+    %         co_fr_at_bin = zeros(1,n_co_points);
+    %
+    %         %for every solo flight, calculate firing rate at bin
+    %         for ii_solo_flight = 1:n_solo_flights
+    %             solo_bsp_at_flight = solo_bsp_x_pos(ii_solo_flight,:);
+    %             n_bsp_at_bin = sum(bin_start <= solo_bsp_at_flight & solo_bsp_at_flight < bin_end);
+    %             solo_spikes_at_flight = solo_spikes_x_pos(ii_solo_flight,:);
+    %             n_spikes_at_bin = sum(bin_start <= solo_spikes_at_flight & solo_spikes_at_flight < bin_end);
+    %             solo_fr_at_bin(ii_solo_flight) = (n_spikes_at_bin/n_bsp_at_bin) * frames_per_second;
+    %         end
+    %
+    %         %for every cross-over, calculate firing rate at bin
+    %         for ii_co_flight = 1:n_co_points
+    %             co_bsp_at_flight = bsp.x_pos(ii_co_flight,:);
+    %             n_bsp_at_bin = sum(bin_start <= co_bsp_at_flight & co_bsp_at_flight < bin_end);
+    %             co_spikes_at_flight = spikes.x_pos(ii_co_flight,:);
+    %             n_spikes_at_bin = sum(bin_start <= co_spikes_at_flight & co_spikes_at_flight < bin_end);
+    %             co_fr_at_bin(ii_co_flight) = (n_spikes_at_bin/n_bsp_at_bin) * frames_per_second;
+    %         end
+    %
+    %         solo_fr_at_bin = solo_fr_at_bin(isfinite(solo_fr_at_bin));
+    %         co_fr_at_bin = co_fr_at_bin(isfinite(co_fr_at_bin));
+    %         % calculate p only for bins with more than n flights
+    %         if length(co_fr_at_bin) >= min_flights_per_bin
+    %             [~,p_fr(ii_bin)] = ttest2(solo_fr_at_bin,co_fr_at_bin);
+    %             diff_mean_fr(ii_bin) = mean(solo_fr_at_bin) - mean(co_fr_at_bin);
+    %         else
+    %             p_fr(ii_bin) = nan;
+    %             diff_mean_fr(ii_bin) = nan;
+    %         end
+    %
+    %         solo_co_comparison.p_diff_firing_rate = p_fr;
+    %         solo_co_comparison.diff_mean_firing_rate = diff_mean_fr;
+    %         sig_bins_centers = sig_bins_limits(1:end-1) + sig_bins_width/2;
+    %         solo_co_comparison.bin_centers = sig_bins_centers;
+    %         solo_co_comparison.n_bins = n_bins;
+    %
+    %         co(ii_dir).solo_co_comparison = solo_co_comparison;
+    %
+    %     end
+    %     else
+    %        co(ii_dir).solo_co_comparison.n_bins=0;
+    %     end
+    %%
     params.dis_before_after_co = dis_before_after_co;
     params.time_before_after_co = time_before_after_co;
     params.co_positions = {co_x_positions(direction_ind{1}),co_x_positions(direction_ind{2})};
