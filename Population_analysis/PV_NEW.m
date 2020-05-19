@@ -1,4 +1,4 @@
-%% Population vectore analysis
+%% Population vector analysis
 clear
 
 %% data:
