@@ -40,7 +40,7 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell = 106:length(behavior_struct_names)
+for ii_cell = 27:length(behavior_struct_names)
     ii_cell
     signif=0;
     %% load data
@@ -101,8 +101,10 @@ for ii_cell = 106:length(behavior_struct_names)
             end
             % Mean firing rate along the entire session
             axes('units','normalized','Position',[.23 .87 .02 .05]);
+            if ~sum(behavior_struct.exp_data.mean_fr)==0
             bar(1,behavior_struct.exp_data.mean_fr  ,.2,'facecolor',[1 .5 0])
             set(gca,'xtick',1,'xticklabel','mean FR','ylim',[0 behavior_struct.exp_data.mean_fr  *1.05],'ytick',behavior_struct.exp_data.mean_fr  ,'yticklabel',round(behavior_struct.exp_data.mean_fr  *10)/10)
+            end
             box off
             
             %%     plot data for every direction
@@ -225,7 +227,7 @@ for ii_cell = 106:length(behavior_struct_names)
                 plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
                 plot(behavior_struct.solo(ii_dir).PSTH_for_field_detection,behavior_struct.solo(1).x_pos_firing_rate{1, 2},'color',solo_colors{ii_dir},'LineWidth',2);
                 plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(1,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                max_x = round(max([max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos(1,:)),max(max(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate))])*1.1*10) / 10;
+                max_x = round(max([max(behavior_struct.solo(ii_dir).PSTH_for_field_detection),max(max(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate))])*1.1*10) / 10;
                 if max_x~=0
                     set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                 end
@@ -236,6 +238,7 @@ for ii_cell = 106:length(behavior_struct_names)
                 % allocentric comparison
                 axes(co_ax{4})
                 hold on
+                if behavior_struct.co(ii_dir).solo_co_comparison.n_bins~=0
                 bins_centers = behavior_struct.co(ii_dir).solo_co_comparison.bin_centers;
                 n_bins = length(bins_centers);
                 invhibited_ind =behavior_struct.co(ii_dir).solo_co_comparison.diff_mean_firing_rate  >0;
@@ -260,6 +263,7 @@ for ii_cell = 106:length(behavior_struct_names)
                 str = sprintf('n Bins = %d\nAlpha = .05\nadj. Alpha = %.4f',n_bins,adjusted_alpha);
                 [x,y]=ds2nfu([x_limits(2) x_limits(2)],[tunnel_limits(2) tunnel_limits(2)]*1.2);
                 annotation('textarrow',x,y,'string',str,'fontsize',10,'Color',[0,0,0],'HeadStyle','none','LineStyle', 'none', 'TextRotation',0)
+                end
                 
                 % raster of solo spikes
                 axes(co_ax{5})
@@ -404,19 +408,19 @@ for ii_cell = 106:length(behavior_struct_names)
                 
                 
                 % solo firing rate -  bins as 2D
-                axes(co_ax{18})
-                hold on
-                %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
-                plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D,allo_X_bins_vector_of_centers_2D,'color',solo_colors{ii_dir},'LineWidth',2);
-                %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D) );
-                if max_x~=0
-                    set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
-                end
-                str = sprintf('Hz');
-                xlabel(str,'fontsize',fsize)
-                box off
-                
+%                 axes(co_ax{18})
+%                 hold on
+%                 %plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
+%                 plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D,allo_X_bins_vector_of_centers_2D,'color',solo_colors{ii_dir},'LineWidth',2);
+%                 %plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
+%                 max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.solo_x_pos_same_bin_as_2D) );
+%                 if max_x~=0
+%                     set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
+%                 end
+%                 str = sprintf('Hz');
+%                 xlabel(str,'fontsize',fsize)
+%                 box off
+%                 
                 % solo firing rate - regular bins
                 axes(co_ax{19})
                 hold on

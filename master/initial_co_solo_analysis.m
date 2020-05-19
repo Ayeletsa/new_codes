@@ -7,7 +7,7 @@ data_dir_info=dir(cells_struct_dir);
 %% for each cell
 
 
-for ii_cell = 4:length(data_dir_info)
+for ii_cell = 3:length(data_dir_info)
     
     
     ii_cell

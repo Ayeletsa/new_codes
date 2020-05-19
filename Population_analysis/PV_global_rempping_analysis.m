@@ -15,7 +15,7 @@ n_shuffles=100;
 SI_threshold=1;
 min_n_spike_vec=[100];
 solo_time_spent_minimum_for_1D_bins=0.03;%need to check!
-range=[-25 25];% change to run just on non-overlap part between solo and co
+range=[-40 40];% change to run just on non-overlap part between solo and co
 window=10;
 step=2;
 bin_start=range(1):step:range(2)-window;
@@ -46,12 +46,14 @@ for solo_X_bin_size=solo_X_bin_size_vec
             PV_co_dir_bin=[];PV_solo_dir=[];
             day=0;
             day_i=0;
+            file_names={dir_info.name};
+            file_names=file_names(find([dir_info.isdir]==0));
             %%
-            for cell_i=3:length({dir_info.name})-1
+            for cell_i=1:length(file_names)
                 % for cell_i=3:15
                 
                 % load data:
-                load(fullfile(dir_data,dir_info(cell_i).name))
+                load(fullfile(dir_data,file_names{cell_i}))
                 num_spike_during_flight=sum(~isnan(cell_co_solo_initial_analysis.solo(dir_i).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(dir_i).spikes.ts_usec(:)));
                 if num_spike_during_flight<=min_n_spike || cell_co_solo_initial_analysis.solo(dir_i).SI<SI_threshold
                     continue
@@ -328,7 +330,7 @@ for solo_X_bin_size=solo_X_bin_size_vec
                         y_pos_by_dis(day_i,ii)=nanmean(co_flight_y_pos_bsp_x_bin(sub2ind(size(co_velocity_plus_one),co, ind)));
                     end
                 end
-                %% comupte tuning curves fo co data bin by bin of CO:
+                %% comupte tuning curves for co data bin by bin of CO:
                 for bin_i=1:length(bin_start)
                     bin_i
                     relevant_ind_bsp=(co_dis_bsp>=bin_start(bin_i) & co_dis_bsp<bin_end(bin_i));
@@ -363,7 +365,7 @@ for solo_X_bin_size=solo_X_bin_size_vec
                         (other_dir_solo_pos_bsp, other_dir_solo_pos_spike, solo_X_bins_vector_of_centers, solo_time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
                     
                     %% create shuffle uper bound (solo vs solo)
-                    for shuffle_i=1:n_shuffles
+                    parfor shuffle_i=1:n_shuffles
                         shuffle_i
                         bsp_data_flight_to_remove_ind_all=[];
                         spike_data_flight_to_remove_ind_all=[];
@@ -503,7 +505,7 @@ for solo_X_bin_size=solo_X_bin_size_vec
                 [other_dir_normMEAN_PV_corr_bin(:,bin_i) other_dir_normMEAN_PV_corr_mean_bin(bin_i)]=corr_mat_cells_by_pos(normMEAN_PV_co_dir_bin_i,normMEAN_other_dir_PV_solo_dir,2);
                 
                 
-                for shuffle_i=1:n_shuffles
+                parfor shuffle_i=1:n_shuffles
                     shuffle_i
                     % for upper bound shuffle (solo vs solo)
                     %=======================================================

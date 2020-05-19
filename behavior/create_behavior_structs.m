@@ -28,6 +28,7 @@ for ii_cell = 3:length(data_dir_info)
     
     % analyze behavior
     behave_ts=[cell_struct.exp_info.nlg_events(2).start_time,cell_struct.exp_info.nlg_events(2).end_time];
+    
     ball_pos_name=[ball_position_folder,'ball_pos_bat_',num2str(bat),'_day_',num2str(day),'.mat'];
     bsp_data=cell_struct.bsp_data;
        %start_end_ts_ns = [cell_struct.exp_info.nlg_events(2).start_time_fitted_to_bsp_msec cell_struct.exp_info.nlg_events(3).end_time_fitted_to_bsp_msec] * 1e6;

@@ -2,9 +2,11 @@ function Twobatproj_param(param_folder)
 
 %% folders:
 % data input:
+params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\all_bats_cell_structs\';
 %params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
 %params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
-params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2299';
+%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2299';
+
 % data output:
 main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
 params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
@@ -99,6 +101,7 @@ save(param_file_name, '-struct', 'solo_params')
 
 %% field detection params
 params.fields.bin_centers=params.solo.solo_X_bins_vector_of_centers;
+params.fields.bin_edges=params.solo.solo_X_bins_vector;
 params.fields.bin_size = params.solo.solo_X_bin_size;
 params.fields.bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
 params.fields.ker_SD = 1.5;
@@ -293,7 +296,7 @@ params.population_vector.ego_bin_end=params.population_vector.ego_range(1)+param
 params.population_vector.ego_bin_center=[params.population_vector.ego_bin_start+params.population_vector.ego_bin_end]./2;
 params.population_vector.ego_bin_dis=params.population_vector.ego_range(1):params.population_vector.step:params.population_vector.ego_range(2);
 %data in y:
-params.population_vector.run_only_on_intersent_data=0;
+params.population_vector.run_only_on_intersent_data=1;
 %params.population_vector.full_data=0;
 
 %allocentric tuning params:
