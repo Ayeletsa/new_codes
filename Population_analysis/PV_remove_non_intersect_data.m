@@ -42,6 +42,7 @@ ind_to_remove=~logical_ind;
 data(dir_i).co.bsp.flight_ts(ind_to_remove)=nan;
 data(dir_i).co.bsp.flight_x_pos(ind_to_remove)=nan;
 data(dir_i).co.bsp.flight_y_pos(ind_to_remove)=nan;
+data(dir_i).co.bsp.flight_dis(ind_to_remove)=nan;
 
 %co spikes
 ind_data={ind_intersect.co_spike_ind_for_analysis};
