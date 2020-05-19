@@ -2,8 +2,9 @@
 function   [range_intersect, intersect_by_union]=PV_find_y_intersect_range(data,bin_i,allo_X_bins_vector,dir_i)
 
 solo_per_bin_bsp_ind=(data(dir_i).solo.bsp.flight_x_pos>=allo_X_bins_vector(bin_i)& data(dir_i).solo.bsp.flight_x_pos<allo_X_bins_vector(bin_i+1));
-if sum(solo_per_bin_bsp_ind(:))~=0
-    co_per_bin_bsp_ind=(data(dir_i).co.bsp.flight_x_pos>=allo_X_bins_vector(bin_i)& data(dir_i).co.bsp.flight_x_pos<allo_X_bins_vector(bin_i+1));
+co_per_bin_bsp_ind=(data(dir_i).co.bsp.flight_x_pos>=allo_X_bins_vector(bin_i)& data(dir_i).co.bsp.flight_x_pos<allo_X_bins_vector(bin_i+1));
+if sum(solo_per_bin_bsp_ind(:))~=0 & sum(co_per_bin_bsp_ind(:))~=0
+    
     % get y data in bin:
     %--------------------
     solo_y_bsp_pos_per_x_bin=data(dir_i).solo.bsp.flight_y_pos(solo_per_bin_bsp_ind);
