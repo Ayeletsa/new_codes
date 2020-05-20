@@ -1,5 +1,5 @@
 %% Master code 2d proj
-
+clear
 % define parameters:
 param_folder='D:\Shaked\TwoBats_new\params\';
 Twobatproj_param(param_folder);
@@ -27,4 +27,5 @@ plot_co_main_cell_fig(dir_param_file_name,population_param_file_name)
 
 %% 6. Audio
 audio_param_file_name = fullfile(param_folder,'audio_params.mat');
-clicks_spikes_analysis(dir_param_file_name,audio_param_file_name,co_param_file_name,solo_param_file_name)
+early_late_file_name = fullfile(param_folder,'early_late_params.mat');
+clicks_spikes_analysis(dir_param_file_name,audio_param_file_name,co_param_file_name,solo_param_file_name,early_late_file_name)

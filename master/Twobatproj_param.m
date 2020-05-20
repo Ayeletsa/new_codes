@@ -184,7 +184,6 @@ params.co.sig_bins_width = 3;
 params.co.min_flights_per_bin = 3;
 
 
-
 %e. 2D tuning distance vs allocentric (trying few different bin sizes)
 params.co.allo_X_bin_size_2D=3; %changded to 3 meter
 params.co.dis_X_bin_size_2D=3; %changded to 3 meter
@@ -274,26 +273,60 @@ param_file_name=fullfile(param_folder,'co_population_params.mat');
 save(param_file_name, '-struct', 'co_population_params')
 
 
-%% Audio params
+%% Audio detection params
 params.audio.filter_cutoff = 1e4;            %in Hz
 params.audio.filter_order = 300;
-params.audio.th = 50;                         %in SNR
-params.audio.max_intra_click_null = 2000;    %in usecs
+params.audio.th_min = [15 30];               %in SNR
+params.audio.th = [20 50];                   %in SNR
+params.audio.max_intra_click_null = 1000;    %in usecs
 params.audio.min_cluster_size = 30;          %in usecs
-params.audio.max_cluster_size = 4000;        %in usecs
+params.audio.max_cluster_size = 2500;        %in usecs
 params.audio.max_rise_time = 500;            %in usecs
 % params.audio.max_fall_time = 1500;           %in usecs
 % params.audio.fall_level_percent = 0.3;
-params.audio.min_intra_click_diff = 15*10^3; %in usecs
-params.audio.max_intra_click_diff = 30*10^3; %in usecs
+params.audio.time_window_for_FFT = [-500, 2000]; %in usecs (-0.5:2 ms around click peak)
+params.audio.low_freq_band = [5, 12];          %in kHz
+params.audio.mid_freq_band = [18, 40];          %in kHz
+params.audio.high_freq_band = [40, 50];   %in kHz
+params.audio.min_band_energy_ratio_low_snr = [-17 10]; % db
+params.audio.min_band_energy_ratio_high_snr = [-17 6]; % db
+params.audio.snr_th_for_energy_ratio = 500;     %in SNR
+params.audio.min_click_diff = 10*10^3;          %in usecs
+params.audio.min_intra_click_diff = 14*10^3; %in usecs (changed from 15 after viewing hist)
+params.audio.max_intra_click_diff = 35*10^3; %in usecs (changed from 30 after talking with Shir + viewing hist)
 % params.audio.min_inter_click_diff = 50*10^3; %in usecs
-params.audio.speed_of_sound = 346.13*10^-6;    %in m/usecs
+params.audio.speed_of_sound = (346.13+12)*10^-6;    %in m/usecs (adding bat relative velocity
 params.audio.click_offset_window = [-3 1];      %in meters
-params.audio.click_offset_search_window = 1e3;  %in usecs
+params.audio.click_offset_search_window = 3000;  %in usecs, from each side
+params.audio.th_for_aligned_clicks = [25 200];       %in SNR
+params.audio.th_for_close_clicks = [25 100];         %in SNR
+
+params.audio.problematic_days = {'20191210b','20191211','20191212','20191213'};
+
+% bins for click amplitude
+params.audio.amp_dis_n_bins = 20;
+params.audio.amp_dis_X_bin_size = (params.co.dis_X_max-params.co.dis_X_min)/params.audio.amp_dis_n_bins;
+params.audio.amp_dis_X_bins_vector=params.co.dis_X_min:params.audio.amp_dis_X_bin_size:params.co.dis_X_max;
+params.audio.amp_dis_X_bins_vector_of_centers=params.audio.amp_dis_X_bins_vector(1:end-1)+params.audio.amp_dis_X_bin_size/2;
+params.audio.amp_binning_method = 'median';
 
 %save
 audio_params=params.audio;
 param_file_name=fullfile(param_folder,'audio_params.mat');
-save(param_file_name, '-struct', 'audio_params')
+save(param_file_name,'-struct', 'audio_params')
+save(param_file_name, 'audio_params','-append')
 
+
+%% Early-Late params
+params.E_L.smooth_wind = 5;
+params.E_L.cr_upsample = 100;
+params.E_L.solo_prcnt = [75 25];
+params.E_L.count_dc_once = false;
+params.E_L.n_permutations = 1000;
+params.E_L.tuning_up_factor = 50;
+
+%save
+early_late_params=params.E_L;
+param_file_name=fullfile(param_folder,'early_late_params.mat');
+save(param_file_name, '-struct', 'early_late_params')
 
