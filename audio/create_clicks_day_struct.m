@@ -1,4 +1,4 @@
-function create_clicks_day_struct(p,clicks_struct_name,audio_filt_name,audio_param_file_name,general_behavior_data_file_name,tag_i,behav_struct_name,co_param_file_name,solo_param_file_name,fig_folder)
+function clicks_struct = create_clicks_day_struct(p,clicks_struct_name,audio_filt_name,audio_param_file_name,general_behavior_data_file_name,tag_i,behav_struct_name,co_param_file_name,solo_param_file_name,fig_folder)
 %use audio data to detect clicks in solo and CO behaviors.
 %use filtered audio!!!
 
@@ -7,6 +7,9 @@ if exist(clicks_struct_name,'file')
 else
     skip_detection = false;
 end
+
+load_signal = false;
+use_fft = true;
 
 load(audio_param_file_name)
 load(behav_struct_name)
@@ -19,6 +22,7 @@ fig_prefix = strrep(fig_prefix,'clicks_','');
 %for problematic days we have slightly different parameters:
 if ~contains(fig_prefix,problematic_days)
     th(1)=th(2);
+    th_min(1)=th_min(2);
     min_band_energy_ratio_low_snr(1)=min_band_energy_ratio_low_snr(2);
     min_band_energy_ratio_high_snr(1)=min_band_energy_ratio_high_snr(2);
     th_for_aligned_clicks(1)=th_for_aligned_clicks(2);
@@ -27,9 +31,12 @@ end
 
 % calculate distance between bats (for removing clicks from the other bat)
 dist_self_from_other_x = (bsp_proc_data(tag_i).pos(:,1) - bsp_proc_data(3-tag_i).pos(:,1));
-dist_self_from_other_x(behavioral_modes.directional_ind{2}) = -dist_self_from_other_x(behavioral_modes.directional_ind{2});
+dist_self_from_other_y = (bsp_proc_data(tag_i).pos(:,2) - bsp_proc_data(3-tag_i).pos(:,2));
+dist_self_from_other = sign(dist_self_from_other_x).*(dist_self_from_other_x.^2 + dist_self_from_other_y.^2).^0.5;
+dist_self_from_other(behavioral_modes.directional_ind{2}) = -dist_self_from_other(behavioral_modes.directional_ind{2});
 
 %% load audio and initialize struct
+if load_signal
 clicks = struct('name',fig_prefix,'audio_params',audio_params);
 for ibat=1:2
     if ibat==1
@@ -45,22 +52,26 @@ for ibat=1:2
     disp(['loading audio: ' clicks(ibat).bat])
     fname = [audio_filt_name '_' clicks(ibat).bat '.ncs'];
     [clicks(ibat).filt, clicks(ibat).ts, ~] = Nlx_csc_read(fname,[]);
-    if ~skip_detection
+    if use_fft
     [clicks(ibat).unfilt, ~, ~] = Nlx_csc_read(unfilt_fname,[]);
     end
     if strcmp(clicks(ibat).bat,'other') %use a single set of timestamps
         clicks(ibat).filt = interp1(clicks(ibat).ts,clicks(ibat).filt,clicks(1).ts);
-        if ~skip_detection
+        if use_fft
         clicks(ibat).unfilt = interp1(clicks(ibat).ts,clicks(ibat).unfilt,clicks(1).ts);
         end
         clicks(ibat).ts = clicks(1).ts;
     end
 end
-
 % get fs_aud from the data
 rec_length=clicks(1).ts(end)-clicks(1).ts(1);
 unit=10^-(round(floor(log10(rec_length / 3600)) / 3)*3);
 fs_aud = 1/(unit*median(diff(clicks(1).ts(1:1000))));
+
+else
+fs_aud = 1e5;
+end
+
 us2fs = fs_aud*1e-6; %convert usecs to samples for clarity
 
 %% detect clicks
@@ -71,14 +82,15 @@ for ibat=1:2
     
     % get flight epochs in audio (interpolate smaller gaps)
     intrp_wind = 3e6; %3secs
-    clicks(ibat).ind_FE = interp1gap(bsp_proc_data(clicks(ibat).tag).ts_FE,ones(1,length(bsp_proc_data(clicks(ibat).tag).ts_FE)),clicks(ibat).ts,intrp_wind)>0;
+%     clicks(ibat).ind_FE = interp1gap(bsp_proc_data(clicks(ibat).tag).ts_FE,ones(1,length(bsp_proc_data(clicks(ibat).tag).ts_FE)),clicks(ibat).ts,intrp_wind)>0;
+    clicks(ibat).ind_FE = interp_gap_fast(bsp_proc_data(clicks(ibat).tag).ts_FE,clicks(ibat).ts,intrp_wind);
     
     % calculate thresholds for detecting clicks (only during flights)
     nanind = isnan(clicks(ibat).filt);
     clicks(ibat).aud_BL = mad(clicks(ibat).filt(~nanind & clicks(ibat).ind_FE));
-    
+        
     %use simple threshold to find clicks
-    thresh = th(ibat) * clicks(ibat).aud_BL;
+    thresh = th_min(ibat) * clicks(ibat).aud_BL;
     filt_abs = abs(clicks(ibat).filt);
     above_th = filt_abs > thresh;
     
@@ -111,18 +123,14 @@ for ibat=1:2
     clicks(ibat).wrong_rise_time = clicks(ibat).clusters(rise_time_reject);
     clicks(ibat).clusters = clicks(ibat).clusters(~rise_time_reject);
     
-    %filter clusters by size
+    %filter clusters by size (length)
     size_reject = [clicks(ibat).clusters.Area] < min_cluster_size * us2fs | max_cluster_size * us2fs < [clicks(ibat).clusters.Area];
     clicks(ibat).wrong_size = clicks(ibat).clusters(size_reject);
     clicks(ibat).clusters = clicks(ibat).clusters(~size_reject);
     
-%     %filter by amplitude
-%     snr_reject = [clicks(ibat).clusters.snr] < th;
-%     clicks(ibat).wrong_amplitude = clicks(ibat).clusters(snr_reject);
-%     clicks(ibat).clusters = clicks(ibat).clusters(~snr_reject);
-    
     %Shir's spectral criterion:
-    %filter by frequency domain information    
+    %filter by frequency domain information
+    if use_fft
     fft_window = (time_window_for_FFT(1)*us2fs): ...
     (time_window_for_FFT(2)*us2fs + 1);
     L = length(fft_window);
@@ -158,6 +166,8 @@ for ibat=1:2
     clicks(ibat).wrong_mid_low_spectrum = clicks(ibat).clusters(wrong_mid_low_spectrum);
     clicks(ibat).clusters = clicks(ibat).clusters(~wrong_mid_low_spectrum);
     
+    end
+    
     %remove clicks too close to other clicks (echos or noises - chooses the
     % click with higher snr)
     M = zeros(1,length(clicks(ibat).filt));
@@ -166,25 +176,32 @@ for ibat=1:2
     [~, min_diff_reject] = setdiff([clicks(ibat).clusters.peak_abs_idx], new_click_IX);
     clicks(ibat).min_diff_reject = clicks(ibat).clusters(min_diff_reject);
     clicks(ibat).clusters(min_diff_reject) = [];
-
-    %calculate distance from 2nd bat
-    dist_at_peak = interp1(bsp_proc_data(tag_i).ts,dist_self_from_other_x,[clicks(ibat).clusters.peak_ts]);
-    dist_at_peak(dist_at_peak < click_offset_window(1) | click_offset_window(2) < dist_at_peak) = NaN;
-    sound_offset = round(abs(dist_at_peak) / speed_of_sound * us2fs);
-    abs_idx_at_2nd_bat = num2cell([clicks(ibat).clusters.peak_abs_idx] + sound_offset);
-    [clicks(ibat).clusters.abs_idx_at_2nd_bat] = abs_idx_at_2nd_bat{:};
     
+    %calculate distance from 2nd bat
+    dist_at_peak = interp1(bsp_proc_data(tag_i).ts,dist_self_from_other,[clicks(ibat).clusters.peak_ts]);
+    sound_offset = round(abs(dist_at_peak) / speed_of_sound * us2fs);
+    abs_idx_at_2nd_bat = [clicks(ibat).clusters.peak_abs_idx] + sound_offset;
+    abs_idx_at_2nd_bat(dist_at_peak < click_offset_window(1) | click_offset_window(2) < dist_at_peak) = NaN;
+    dist_c = num2cell(dist_at_peak);
+    abs_2_bat_c = num2cell(abs_idx_at_2nd_bat);
+    [clicks(ibat).clusters.dist_at_peak] = dist_c{:};
+    [clicks(ibat).clusters.abs_idx_at_2nd_bat] = abs_2_bat_c{:};
+    
+    %filter by amplitude
+    snr_reject = [clicks(ibat).clusters.snr] < th(ibat);
+    clicks(ibat).wrong_amplitude = clicks(ibat).clusters(snr_reject);
+    clicks(ibat).clusters = clicks(ibat).clusters(~snr_reject);
 end
 
 %% remove clicks originating from the other bat
 search_neighborhood = round(click_offset_search_window*us2fs);
 for ibat=1:2
     disp(['removing clicks on other bat: ' clicks(ibat).bat])
-    
+     
     close_proximity_ind = ~isnan([clicks(ibat).clusters.abs_idx_at_2nd_bat]);
     clicks(ibat).clicks_in_close_proximity = clicks(ibat).clusters(close_proximity_ind);
     clicks(ibat).clicks_in_close_proximity([clicks(ibat).clicks_in_close_proximity.snr] < th_for_aligned_clicks(ibat)) = [];
-    search_window = arrayfun(@(x) x-search_neighborhood:x+search_neighborhood, ...
+    abs_search_window = arrayfun(@(x) x-search_neighborhood:x+search_neighborhood, ...
         [clicks(ibat).clicks_in_close_proximity.abs_idx_at_2nd_bat],'UniformOutput',false);
 %     [~,suspected_ind_2nd_bat] = cellfun(@(x) ismember(x,[clicks(3-ibat).clusters.peak_abs_idx]),search_window,'UniformOutput',false);
 %     suspected_ind_2nd_bat = cellfun(@(x) x(x>0),suspected_ind_2nd_bat,'UniformOutput',false);
@@ -202,7 +219,7 @@ for ibat=1:2
 %     wrong_other_bat_clicks = suspected_ind_2nd_bat_vec(cell2mat(clicks_with_lower_snr));
 %     clicks(3-ibat).wrong_other_bat_clicks = clicks(3-ibat).clusters(wrong_other_bat_clicks);
 
-    all_search_windows = cell2mat(search_window);
+    all_search_windows = cell2mat(abs_search_window);
     aligned_clicks_ind = ismember([clicks(3-ibat).clusters.peak_abs_idx],all_search_windows);
     clicks_with_low_snr_aligned = [clicks(3-ibat).clusters.snr] < th_for_aligned_clicks(3-ibat);
     clicks_with_low_snr_close = [clicks(ibat).clusters.snr] < th_for_close_clicks(ibat);
@@ -217,7 +234,24 @@ end
 
 %% identify double clicks
 %this is sensitive to clicks from the other bat, so we do it afterwards
+search_neighborhood = round(min_intra_click_diff*us2fs) : round(max_intra_click_diff*us2fs);
 for ibat=1:2
+    ici = diff([clicks(ibat).clusters.peak_abs_idx]);
+    dc_1st_ind = find(min_intra_click_diff*us2fs < ici & ici < max_intra_click_diff*us2fs);
+    dc_ind = union(dc_1st_ind,dc_1st_ind+1);
+    not_dc = true(1,length(ici)+1);
+    not_dc(dc_ind) = 0;
+    
+    % try to rescue single clicks by lowering threshold around them
+    abs_search_window = arrayfun(@(x) [x-search_neighborhood,x+search_neighborhood], ...
+        [clicks(ibat).clusters(not_dc).peak_abs_idx],'UniformOutput',false);
+    all_search_windows = cell2mat(abs_search_window);
+    rescued_clicks_ind = ismember([clicks(ibat).wrong_amplitude.peak_abs_idx],all_search_windows);
+    clicks(ibat).clusters = [clicks(ibat).clusters;clicks(ibat).wrong_amplitude(rescued_clicks_ind)];
+    [~,S] = sort([clicks(ibat).clusters.peak_abs_idx]);
+    clicks(ibat).clusters = clicks(ibat).clusters(S);
+    
+    % recalculate ici
     ici = diff([clicks(ibat).clusters.peak_abs_idx]);
     dc_1st_ind = find(min_intra_click_diff*us2fs < ici & ici < max_intra_click_diff*us2fs);
     dc_ind = union(dc_1st_ind,dc_1st_ind+1);
@@ -228,7 +262,11 @@ for ibat=1:2
 end
 
 %% save clicks struct
+if use_fft
 clicks_struct = rmfield(clicks,{'ts','filt','unfilt','ind_FE'});
+else
+clicks_struct = rmfield(clicks,{'ts','filt','ind_FE'});
+end
 save(clicks_struct_name,'clicks_struct');
 else
 disp('skip detection')    
@@ -263,7 +301,7 @@ clicks_stats
 
 %% find clicks in solo & co + plot them
 % %we do it here because the audio signals are already loaded to the memory
-clicks_struct(1).co = clicks_in_co (bsp_proc_data,behavioral_modes,tag_i,co_param_file_name,clicks_struct,0,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
-clicks_struct(1).solo = clicks_in_solo (bsp_proc_data,behavioral_modes,tag_i,solo_param_file_name,clicks_struct,1,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
-
-save(clicks_struct_name,'clicks_struct');
+% clicks_struct(1).co = clicks_in_co (bsp_proc_data,behavioral_modes,tag_i,co_param_file_name,clicks_struct,1,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
+% clicks_struct(1).solo = clicks_in_solo (bsp_proc_data,behavioral_modes,tag_i,solo_param_file_name,clicks_struct,1,clicks,fig_folder,fig_prefix,audio_param_file_name,us2fs);
+% 
+% save(clicks_struct_name,'clicks_struct');

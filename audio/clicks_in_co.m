@@ -1,6 +1,16 @@
 function co = clicks_in_co(bsp_proc_data,behavioral_modes,tag_i,co_param_file_name,clicks_struct,plot_co_flag,audio_filt_struct,fig_folder,fig_prefix,audio_param_file_name,us2fs)
 load(co_param_file_name)
 load(audio_param_file_name)
+
+if ~contains(fig_prefix,problematic_days)
+    th(1)=th(2);
+    th_min(1)=th_min(2);
+    min_band_energy_ratio_low_snr(1)=min_band_energy_ratio_low_snr(2);
+    min_band_energy_ratio_high_snr(1)=min_band_energy_ratio_high_snr(2);
+    th_for_aligned_clicks(1)=th_for_aligned_clicks(2);
+    th_for_close_clicks(1)=th_for_close_clicks(2);
+end
+
 us_factor=1e6;
 %% create vectors of variables
 self_ind = strcmp({clicks_struct.bat},'self');
@@ -103,7 +113,7 @@ for ii_dir = 1:2
         % a. find clicks index
         clicks_relative_times = clicks_ts - co_time_usec;
         clicks_ind = find(clicks_ts> bsp_ts_usec{ii_co}(1) & clicks_ts<bsp_ts_usec{ii_co}(end));
-
+        
         % b. find clicks values
         clicks_ts_usec{ii_co} = clicks_ts(clicks_ind);
         clicks_time_to_co{ii_co} = clicks_relative_times(clicks_ind);
@@ -111,6 +121,7 @@ for ii_dir = 1:2
         clicks_x_pos_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_x_pos_at_co{ii_co},clicks_ts_usec{ii_co});
         clicks_intensity_at_co{ii_co} = clicks_intensity(clicks_ind);
         clicks_not_DC_flag_co{ii_co} = clicks_not_DC_flag(clicks_ind);
+        clicks_ind_from_total{ii_co} = clicks_ind;
         
         % count double-clicks only once
         clicks_ind_once = intersect(clicks_ind,DC_counted_once);
@@ -167,6 +178,10 @@ for ii_dir = 1:2
                 
                 yline(th(ibat),'--');
                 yline(-th(ibat),'--');
+                for j=1:2
+                    click_offset_usec = find(bsp_dis_m_at_co{ii_co} > click_offset_window(j),1);
+                    xline(bsp_time_to_co{ii_co}(click_offset_usec-j+1)*1e-6 ,'--');
+                end
                 ylim([-300,300])
                 ylabel('SNR')
                 xlabel('time relative to CO (s)')
@@ -184,6 +199,9 @@ for ii_dir = 1:2
             %% plot self-other alignment for this CO
             dis_criterion_for_click_alignment = bsp_dis_m_at_co{ii_co} >= click_offset_window(1) & bsp_dis_m_at_co{ii_co} <= click_offset_window(2);
             bsp_ts_click_offset = bsp_ts_usec{ii_co}(dis_criterion_for_click_alignment);
+            if isempty(bsp_ts_click_offset)
+                continue
+            end
             co_ind_audio = audio_ts >= bsp_ts_click_offset(1) & audio_ts <= bsp_ts_click_offset(end);
             aud_ts_to_plot = (audio_ts(co_ind_audio) - co_time_usec)*1e-6;
             search_neighborhood = round(click_offset_search_window*us2fs);
@@ -338,7 +356,7 @@ for ii_dir = 1:2
     
     
     %% save struct
-%     co(ii_dir).clicks_ind = clicks_ind_from_total;
+    co(ii_dir).clicks_ind = clicks_ind_from_total;
     co(ii_dir).clicks = clicks;
     co(ii_dir).bsp = bsp;
     co(ii_dir).calling_rate = calling_rate;

@@ -4,11 +4,16 @@ max_per_fig = 5;
 margin_close = 3;%ms
 margin_far = 300;%ms
 
-min_snr = 0;
-max_ratio = -17;
+max_clicks_to_plot = 200;
 
-for ibat = 1%:2
-clicks_to_use = clicks_struct(ibat).clusters([clicks_struct(ibat).clusters.snr] > min_snr & [clicks_struct(ibat).clusters.spectrum_ratio_mid_low] < max_ratio);
+min_snr = 0;
+max_ratio = min_band_energy_ratio_low_snr;
+
+fft_window = (time_window_for_FFT(1)*us2fs):(time_window_for_FFT(2)*us2fs + 1);
+L = length(fft_window);
+
+for ibat = 1:2
+clicks_to_use = clicks_struct(ibat).wrong_mid_low_spectrum([clicks_struct(ibat).wrong_mid_low_spectrum.snr] > min_snr & [clicks_struct(ibat).wrong_mid_low_spectrum.spectrum_ratio_mid_low] < max_ratio(ibat));
 ncl = length(clicks_to_use);
 
 q = floor(ncl/max_per_fig);
@@ -20,7 +25,7 @@ vs = ve - v + 1;
 fig_name = [fig_prefix '_' clicks(ibat).bat '_largeSNR_low_spect'];
 
 for ifig=1:length(v)
-    if v(ifig)==0
+    if v(ifig)==0 || ifig > max_clicks_to_plot/max_per_fig
         break
     end
     clf
@@ -32,10 +37,10 @@ for ifig=1:length(v)
         subplot(4,max_per_fig,icl)
         plot_wind_far = -1e3*margin_far*us2fs:1e3*margin_far*us2fs;
         ind_to_plot_far = clicks_to_use(cl).peak_abs_idx + plot_wind_far;
-        plot(plot_wind_far*1e3/fs_aud,clicks(ibat).filt(ind_to_plot_far)/clicks(ibat).aud_BL)
+        plot(plot_wind_far*1e3/fs_aud,clicks(ibat).filt(ind_to_plot_far)/clicks_struct(ibat).aud_BL)
         xlabel('ms')
         ylabel('snr')
-        ylim([-2000 2000])
+        ylim([-1000 1000])
         xlim([-margin_far margin_far])
         title(num2str(cl))
         
@@ -44,10 +49,10 @@ for ifig=1:length(v)
         ind_fft = clicks_to_use(cl).peak_abs_idx + fft_window;
         plot_wind_close = -1e3*margin_close*us2fs:1e3*margin_close*us2fs;
         ind_to_plot = clicks_to_use(cl).peak_abs_idx + plot_wind_close;
-        plot(plot_wind_close*1e3/fs_aud,clicks(ibat).unfilt(ind_to_plot)/clicks(ibat).aud_BL)
+        plot(plot_wind_close*1e3/fs_aud,clicks(ibat).unfilt(ind_to_plot)/clicks_struct(ibat).aud_BL)
         xline(fft_window(1)*1e3/fs_aud,'r--');
         xline(fft_window(end)*1e3/fs_aud,'r--');
-        ylim([-2000 2000])
+        ylim([-1000 1000])
         xlabel('ms')
         ylabel('snr')
         xlim([-margin_close margin_close])
@@ -64,8 +69,8 @@ for ifig=1:length(v)
         plot(f_fft,fft_click_single_side)
         xline(low_freq_band(1),'g--');
         xline(low_freq_band(2),'g--');
-        xline(high_freq_band(1),'m--');
-        xline(high_freq_band(2),'m--');
+        xline(mid_freq_band(1),'m--');
+        xline(mid_freq_band(2),'m--');
         xlim([0 50])
         xlabel('kHz')
         ylabel('magnitude')

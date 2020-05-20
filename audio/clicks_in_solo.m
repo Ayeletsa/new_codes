@@ -1,6 +1,16 @@
 function solo = clicks_in_solo(bsp_proc_data,behavioral_modes,tag_i,solo_param_file_name,clicks_struct,plot_flight_flag,audio_filt_struct,fig_folder,fig_prefix,audio_param_file_name,us2fs)
 load(solo_param_file_name)
 load(audio_param_file_name)
+
+if ~contains(fig_prefix,problematic_days)
+    th(1)=th(2);
+    th_min(1)=th_min(2);
+    min_band_energy_ratio_low_snr(1)=min_band_energy_ratio_low_snr(2);
+    min_band_energy_ratio_high_snr(1)=min_band_energy_ratio_high_snr(2);
+    th_for_aligned_clicks(1)=th_for_aligned_clicks(2);
+    th_for_close_clicks(1)=th_for_close_clicks(2);
+end
+
 us_factor=1e6;
 %% create vectors of variables
 

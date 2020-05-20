@@ -6,7 +6,7 @@ end
 
 %% plot click statistics
 figure('WindowState','maximized')
-C = {'g','r'};
+C = {'g','r',[0.5 0.5 0.5]};
 sgtitle(fig_prefix,'interpreter','none')
 for ibat=1:2
     ibat_idx = 3*(ibat-1)+1;
@@ -35,13 +35,19 @@ for ibat=1:2
     title([clicks_struct(ibat).bat ' - snr vs. length'])
     
     subplot(4,6,ibat_idx+12)
+    hold on
     mid_low_spect_ratio = [clicks_struct(ibat).clusters.spectrum_ratio_mid_low];
+    mid_low_spect_ratio_wrong = [clicks_struct(ibat).wrong_mid_low_spectrum.spectrum_ratio_mid_low];
     histogram(mid_low_spect_ratio,'binWidth',1,'FaceColor',C{ibat});
+    histogram(mid_low_spect_ratio_wrong,'binWidth',1,'FaceColor',C{3});
     xlabel('ratio (db)')
     title([clicks_struct(ibat).bat ' - mid/low spectral ratio'])
     
     subplot(4,6,ibat_idx+13)
+    wrong_ratio_snr = [clicks_struct(ibat).wrong_mid_low_spectrum.snr];
+    hold on
     scatter(mid_low_spect_ratio,clicks_snr,5,C{ibat},'marker','.')
+    scatter(mid_low_spect_ratio_wrong,wrong_ratio_snr,5,C{3},'marker','.')
     xlabel('ratio (db)')
     ylabel('snr')
     title([clicks_struct(ibat).bat ' - snr vs. mid/low spectral ratio'])
@@ -60,10 +66,21 @@ for ibat=1:2
 %     histogram(high_mid_spect_ratio_noise,'binWidth',1,'FaceColor',[0.5 0.5 0.5])
 %     title([clicks_struct(ibat).bat ' - high/mid spectral ratio'])
     
-    ici = diff([clicks_struct(ibat).clusters.peak_abs_idx])/us2fs/1e3;
-    histogram(ici(ici<50),'binWidth',1,'FaceColor',C{ibat})
+    ici_back = diff([clicks_struct(ibat).clusters.peak_abs_idx])/us2fs/1e3;
+    ici_fwd = circshift(ici_back,1);
+    ici_min = min(ici_back,ici_fwd);
+    ici_min = [NaN ici_min(2:end) NaN];
+    
+    
+    histogram(ici_back(ici_back<50),'binWidth',1,'FaceColor',C{ibat})
     xlabel('ms')
     title([clicks_struct(ibat).bat ' - ICI'])
+    
+    subplot(4,6,ibat_idx+19)
+    scatter(mid_low_spect_ratio,ici_min,5,C{ibat},'marker','.')
+    xlabel('ratio (db)')
+    ylabel('ICI (ms)')
+    title([clicks_struct(ibat).bat ' - ICI vs. mid/low spectral ratio'])
     
 end
 saveas(gcf,fullfile(fig_folder,[fig_prefix '_click_stats.png']))
