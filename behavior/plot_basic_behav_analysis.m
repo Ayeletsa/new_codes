@@ -48,7 +48,7 @@ T_bins_vector_of_centers=T_bins_vector(1:end-1)+T_bin_size/2;
 %% plot
 % title:
 axes('position', [0.4, y_position(1)+0.01, 0.1,  0.1]);
-title(sprintf('Bat %d day %d - Total recording time %.1f min, Total flight time %.1f min',bat,day,(total_time/us_factor)/60,(length(FE_ind)/frame_per_second)/60), 'FontSize', 11, 'FontWeight', 'Bold');
+title(sprintf('Bat %d day %s - Total recording time %.1f min, Total flight time %.1f min',bat,day,(total_time/us_factor)/60,(length(FE_ind)/frame_per_second)/60), 'FontSize', 11, 'FontWeight', 'Bold');
 box off;
 axis off;
 
@@ -320,7 +320,7 @@ ylabel('y position (m)')
 title('XY pos near ball 2')
 
 % save
-fig_name=fullfile(behave_analysis_fig_dir_out,['behavioral_analysis_bat_',num2str(bat),'_day_',num2str(day),'.tif']);
+fig_name=fullfile(behave_analysis_fig_dir_out,['behavioral_analysis_bat_',num2str(bat),'_day_',day,'.tif']);
 saveas(gcf,fig_name)
 
 clf
