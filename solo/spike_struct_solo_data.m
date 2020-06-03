@@ -1,61 +1,41 @@
-function  solo = spike_struct_solo_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name,field_param_file_name)
+function  solo = spike_struct_solo_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name,field_param_file_name,solo_struct_name)
 
 load(solo_param_file_name)
 us_factor=1e6;
+
+%load spikes:
+spikes_ts = cell_struct.spikes.spikes_ts_usec;
+
 %% loop for 2 directions
 
-solo_ind = behavioral_modes.solo_ind;
-
 for ii_dir = 1:2
-    
-    dir_ind = behavioral_modes.directional_ind{ii_dir};
-    
-    %find bsp parameters
-    bsp_during_solo_ts_usec = bsp_proc_data(tag_i).ts(intersect(solo_ind,dir_ind));
-    bsp_during_solo_x_pos = bsp_proc_data(tag_i).pos(intersect(solo_ind,dir_ind),1);
-    bsp_during_solo_y_pos = bsp_proc_data(tag_i).pos(intersect(solo_ind,dir_ind),2);
-    
-    xy=[bsp_during_solo_x_pos,bsp_during_solo_y_pos];
-    vel_xy=abs((sqrt(nansum(diff([0 0;xy  ]).^2,2))./diff([0;bsp_during_solo_ts_usec])).*us_factor);
-    %find spikes parameters
-    epochs=intersect(solo_ind,dir_ind);
-    spikes_during_solo_ts_usec = find_spikes_in_epochs (epochs,cell_struct);
-    spikes_during_solo_x_pos = interp1(bsp_proc_data(tag_i).ts ,bsp_proc_data(tag_i).pos(:,1),spikes_during_solo_ts_usec);
-    spikes_during_solo_y_pos = interp1(bsp_proc_data(tag_i).ts ,bsp_proc_data(tag_i).pos(:,2),spikes_during_solo_ts_usec);
-    spikes_during_solo_vel= interp1(bsp_during_solo_ts_usec ,vel_xy,spikes_during_solo_ts_usec);
-    
-    % create a matrix from the data, such as each row is one flight
-    new_flight_dis_criteria = dis_criteria(ii_dir);
-    new_flight_dis_ind = abs(diff(bsp_during_solo_x_pos)) > new_flight_dis_criteria;
-    new_flight_time_ind = diff(bsp_during_solo_ts_usec) > new_flight_time_criteria;
-    new_flight_ind = find(new_flight_dis_ind | new_flight_time_ind);
-    new_flight_start_ind = [1;new_flight_ind+1];
-    new_flight_end_ind = [new_flight_ind;length(bsp_during_solo_ts_usec)];
-    n_flights = length(new_flight_start_ind);
-    
-    % prepare empty variables
-    bsp_ts_usec = cell(n_flights,1);
-    bsp_x_pos = cell(n_flights,1);
-    bsp_y_pos = cell(n_flights,1);
-    spikes_ts_usec = cell(n_flights,1);
+    %load behavioral data for solo:
+    solo_struct_name_to_load=[solo_struct_name,'_dir_',num2str(ii_dir),'.mat'];
+    load(solo_struct_name_to_load)
+%% remove flights for unstabel cells:
+[logical_vec_of_active_flight]=correct_behavior_to_work_only_for_active_time_per_cell(cell_struct,bsp_ts_usec);
+ind_of_relevant_flight=find(logical_vec_of_active_flight);
+bsp_ts_usec=bsp_ts_usec(ind_of_relevant_flight);
+bsp_x_pos=bsp_x_pos(ind_of_relevant_flight);
+bsp_y_pos=bsp_y_pos(ind_of_relevant_flight);
+bsp_vel_x=bsp_vel_x(ind_of_relevant_flight);
+bsp_vel_xy=bsp_vel_xy(ind_of_relevant_flight);
+%% loop over flights to find spikes per flight:
+    n_flights=length(bsp_ts_usec);
+
     spikes_x_pos = cell(n_flights,1);
     spikes_y_pos = cell(n_flights,1);
     spikes_ts_usec = cell(n_flights,1);
-    bsp_ts_usec= cell(n_flights,1);
     % loop for every flight
     for ii_flight = 1:n_flights
-        flight_ind = new_flight_start_ind(ii_flight):new_flight_end_ind(ii_flight);
-        bsp_ts_usec{ii_flight} = bsp_during_solo_ts_usec(flight_ind)';
-        %bsp_ts_usec{ii_flight}= bsp_during_solo_ts_usec(flight_ind)'.*1e6;
-        bsp_x_pos{ii_flight} = bsp_during_solo_x_pos(flight_ind)';
-        bsp_y_pos{ii_flight}= bsp_during_solo_y_pos(flight_ind)';
-        spikes_ind = (bsp_during_solo_ts_usec(flight_ind(1)) < spikes_during_solo_ts_usec & spikes_during_solo_ts_usec < bsp_during_solo_ts_usec(flight_ind(end)));
-        spikes_ts_usec{ii_flight} = spikes_during_solo_ts_usec(spikes_ind);
-        spikes_x_pos{ii_flight} = spikes_during_solo_x_pos(spikes_ind);
-        spikes_y_pos{ii_flight} = spikes_during_solo_y_pos(spikes_ind);
-        %spikes_ts_usec{ii_flight}=spikes_during_solo_ts_usec(spikes_ind).*1e3;
+        spikes_ind = find(spikes_ts> bsp_ts_usec{ii_flight}(1) & spikes_ts<bsp_ts_usec{ii_flight}(end));
+
+        spikes_ts_usec{ii_flight} = spikes_ts(spikes_ind);
+        spikes_x_pos{ii_flight} = interp1(bsp_ts_usec{ii_flight},bsp_x_pos{ii_flight},spikes_ts_usec{ii_flight});
+        spikes_y_pos{ii_flight} = interp1(bsp_ts_usec{ii_flight},bsp_y_pos{ii_flight},spikes_ts_usec{ii_flight});
+       
     end
-    
+    %% convert cells to mats:
     % turn bsp cells into matrices padded with NaNs,
     % each row is a separate flight
     maxSize = max(cellfun(@numel,bsp_ts_usec));
@@ -87,49 +67,31 @@ for ii_dir = 1:2
     rmat = cellfun(fcn,spikes_y_pos,'UniformOutput',false);
     spikes_y_pos_mat = vertcat(rmat{:});
     
-    % calculate tuning curve
+    %% calculate tuning curve
     not_nan_bsp_x_pos = bsp_x_pos_mat(isfinite(bsp_x_pos_mat));
     not_nan_spikes_x_pos = spikes_x_pos_mat(isfinite(spikes_x_pos_mat));
-     
+    %create data for computing PSTH:     
     data=[bsp_x_pos';bsp_ts_usec';spikes_x_pos';spikes_ts_usec'];
-        field_names={'pos','ts','spikes_pos','spikes_ts'};
-        FE=cell2struct(data,field_names,1);
-       %FE.ts=bsp_x_pos_mat;
-        %FE.pos=bsp_x_pos_mat;
-        %FE.spikes_ts=spikes_ts_usec_mat;
-        %FE.spikes_pos=spikes_x_pos_mat;
-        prm.fields=load(field_param_file_name);
+    field_names={'pos','ts','spikes_pos','spikes_ts'};
+    FE=cell2struct(data,field_names,1);
+    %compute:
+    prm.fields=load(field_param_file_name);
     FE_PSTH = FE_compute_PSTH(FE,prm);
-%     [timespent_binned, ~, ~, solo_x_pos_firing_rate, ~,~] ...
-%         = fn_compute_generic_1D_tuning_new_smooth ...
-%         (not_nan_bsp_x_pos, not_nan_spikes_x_pos, solo_X_bins_vector_of_centers, solo_time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-%    
-%     [~, ~, ~, vel_firing_rate, ~,~] ...
-%         = fn_compute_generic_1D_tuning_new_smooth ...
-%         (vel_xy, spikes_during_solo_vel, vel_bins_vector_of_centers, vel_time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-%     
-    %calculate velocity curve
-     
+
     %% Field detection
     if ~isempty(not_nan_spikes_x_pos)
+        %create data for field detection:
         FR_map.PSTH=FE_PSTH.PSTH;
         FR_map.bin_centers=solo_X_bins_vector_of_centers;
         FR_map.bin_size=prm.fields.bin_size;
-%         data=[bsp_x_pos';bsp_ts_usec';spikes_x_pos';spikes_ts_usec'];
-%         field_names={'pos','ts','spikes_pos','spikes_ts'};
-%         FE=cell2struct(data,field_names,1);
-       %FE.ts=bsp_x_pos_mat;
-        %FE.pos=bsp_x_pos_mat;
-        %FE.spikes_ts=spikes_ts_usec_mat;
-        %FE.spikes_pos=spikes_x_pos_mat;
-%         prm.fields=load(field_param_file_name);
+        %field detection code:
         fields=detect_field_based_on_tamir(FR_map,FE,prm) ;
         if ~isempty(fields)
+            
         field_center=[fields.loc];
         field_size=[fields.width_href];
         field_height=[fields.peak];
         field_edges=reshape([fields.edges_prc],2,length([fields.edges_prc])/2)';
-        
         PSTH=FR_map.PSTH;
         field_height_norm_by_mean=field_height./nanmean(PSTH);
         else
@@ -140,11 +102,6 @@ for ii_dir = 1:2
         field_height_norm_by_mean=[];
         PSTH=FR_map.PSTH;
         end
-      
-        
- 
-   %[field_center,field_size,field_height,field_edges,PSTH] = find_fields_PSTH_Basic_withShuffle(flights_struct,solo_param_file_name);
-   %field_height_norm_by_mean=field_height./nanmean(PSTH);
     else
         fields=[];
         field_center=[];
@@ -172,7 +129,6 @@ for ii_dir = 1:2
     solo(ii_dir).PSTH_for_field_detection=FE_PSTH.PSTH;
     solo(ii_dir).SI=information_per_spike;
     solo(ii_dir).fields=fields;
-   % solo(ii_dir).vel_firing_rate=vel_firing_rate;
 end
 
 end
