@@ -3,7 +3,7 @@ load(general_behavior_data_file_name)
 load(behav_params_file_name)
 % figure param:
 panel_size=[0.1 0.085];
-
+figure('units','normalized','outerposition',[0 0 1 1])
 %x pos
 horizontal_dist=0.15;
 x_position(1)=0.05;
@@ -11,6 +11,7 @@ x_position(2)=x_position(1)+horizontal_dist;
 x_position(3)=x_position(2)+horizontal_dist;
 x_position(4)=x_position(3)+horizontal_dist;
 x_position(5)=x_position(4)+horizontal_dist;
+x_position(6)=x_position(5)+horizontal_dist;
 
 %y pos
 vertical_dist=0.15;
@@ -26,7 +27,7 @@ y_position(9)=y_position(8)-vertical_dist;
 
 % space bins:
 X_min=3;
-X_max=120;
+X_max=135;
 X_bin_size=5;
 X_bins_vector=X_min:X_bin_size:X_max;
 X_bins_vector_of_centers=X_bins_vector(1:end-1)+X_bin_size/2;
@@ -57,7 +58,7 @@ axis off;
 
 % Precentage of flight time
 ax1=axes('position',[x_position(1) y_position(1) panel_size]);
-behavior_ind=[length(behavioral_modes.solo_ind),length(behavioral_modes.tracking_ind),length(behavioral_modes.CO_no_UT)];
+behavior_ind=[length(behavioral_modes.solo_ind),length(behavioral_modes.tracking_ind),length(behavioral_modes.CO_ind)];
 h=100*(behavior_ind./length(FE_ind));
 h(end+1)=100-sum(h);
 bar(h)
@@ -148,9 +149,14 @@ behavioral_modes.CO_hist_space=h;
 %---------------------------------------------------------------------
 %a. velocity profile along the tunnle:
 axes('position',[x_position(3) y_position(1) panel_size]);
-plot(pos_self_x, velocity_self_xy,'.')
+solo_x=[behavioral_modes.solo_bsp_struct(1).bsp_x_pos;behavioral_modes.solo_bsp_struct(2).bsp_x_pos];    
+solo_vel_xy=[behavioral_modes.solo_bsp_struct(1).bsp_vel_xy;behavioral_modes.solo_bsp_struct(2).bsp_vel_xy];
+solo_x=cell2mat(solo_x');
+solo_vel_xy=cell2mat(solo_vel_xy');
+
+plot(solo_x, solo_vel_xy,'.')
 set(gca,'Xlim',[X_min X_max]);
-set(gca,'Ylim',[0 15]);
+set(gca,'Ylim',[2 9]);
 title('Velocity along the tunnle')
 xlabel('X position (m)')
 ylabel('Velocity (m/s)')
@@ -172,27 +178,54 @@ title('velocity (m/s) in differnt behaviors')
 behavioral_modes.sem_vel=sem_vel;
 behavioral_modes.mean_vel_behavior=mean_vel_behavior;
 
+%d. velocity near the ball
+axes('position',[x_position(3) y_position(4) panel_size]);
+solo_x=[behavioral_modes.solo_bsp_struct(1).bsp_x_pos;behavioral_modes.solo_bsp_struct(2).bsp_x_pos];    
+solo_vel_xy=[behavioral_modes.solo_bsp_struct(1).bsp_vel_xy;behavioral_modes.solo_bsp_struct(2).bsp_vel_xy];
+solo_x=cell2mat(solo_x');
+solo_vel_xy=cell2mat(solo_vel_xy');
+co_x=[behavioral_modes.co_data.co_bsp_data(1).bsp_x_pos_at_co  ;behavioral_modes.co_data.co_bsp_data(2).bsp_x_pos_at_co  ];    
+co_vel_xy=[behavioral_modes.co_data.co_bsp_data(1).bsp_vel_xy_at_co  ;behavioral_modes.co_data.co_bsp_data(2).bsp_vel_xy_at_co  ];    
+co_x=cell2mat(co_x');
+co_vel_xy=cell2mat(co_vel_xy');
+load(ball_pos_name)
+solo_dist_from_ball=min([abs(solo_x-ball_1_pos(1)); abs(solo_x-ball_2_pos(1))]);
+co_dist_from_ball=min([abs(co_x-ball_1_pos(1)); abs(co_x-ball_2_pos(1))]);
+
+plot(solo_dist_from_ball,solo_vel_xy,'k.');
+hold on;
+plot(co_dist_from_ball,co_vel_xy,'m.');
+xlim([0 15])
+xlabel('Distance from ball (m)')
+ylabel('XY Speed (m/s)')
+title('velocity near the balls')
+
 %d. velocity triggered by CO
 axes('position',[x_position(3) y_position(5) panel_size]);
-mat= repmat([-300:300]',1,length(behavioral_modes.CO_point));
-CO_point_idx = repmat(behavioral_modes.CO_point,[601,1]);
-CO_trigger_idx = CO_point_idx+mat;
-if max(max(CO_trigger_idx))>length(velocity_self_xy)
-  CO_trigger_idx(:,end)=[];  
-end
-vel_trig_CO=nanmean(abs(velocity_self_xy(CO_trigger_idx)),2);
-plot(-300:300,vel_trig_CO,'k')
+all_co_vel=[behavioral_modes.co_data.co_bsp_data(1).bsp_vel_xy_at_co; behavioral_modes.co_data.co_bsp_data(2).bsp_vel_xy_at_co];
+all_co_dis=[behavioral_modes.co_data.co_bsp_data(1).bsp_dis_m_at_co; behavioral_modes.co_data.co_bsp_data(2).bsp_dis_m_at_co];
+maxSize = max(cellfun(@numel,all_co_vel));
+fcn = @(x) [x nan(1,maxSize-numel(x))];
+% a. vel
+rmat = cellfun(fcn,all_co_vel,'UniformOutput',false);
+vel_mat = vertcat(rmat{:});
+% b. dis
+rmat = cellfun(fcn,all_co_dis,'UniformOutput',false);
+dis_mat = vertcat(rmat{:});
+
+
+
+plot(dis_mat,vel_mat,'.','color',[.5 .5 .5])
 hold on;
-plot([0 0],[min(vel_trig_CO) max(vel_trig_CO)],'r')
-ylim([min(vel_trig_CO) max(vel_trig_CO)])
-xlim([-300 300])
+plot([0 0],[min(vel_mat(:)) max(vel_mat(:))],'r')
+ylim([min(vel_mat(:)) max(vel_mat(:))])
+xlim([-40 40])
 %ylim([6.5 8.5])
-labels=get(gca,'Xtick');
-set(gca,'Xtick',labels,'XtickLabel',labels/frame_per_second)
-xlabel('Time (s)')
-ylabel('X Speed (m/s)')
-title('mean velocity triggered by CO')
-behavioral_modes.vel_trig_CO=vel_trig_CO;
+%labels=get(gca,'Xtick');
+%set(gca,'Xtick',labels,'XtickLabel',labels)
+xlabel('Inter-bat distance (m)')
+ylabel('XY Speed (m/s)')
+title('velocity triggered by CO')
 
 
 %4. Y position
@@ -258,6 +291,33 @@ set(gca,'Xtick',labels,'XtickLabel',labels/frame_per_second)
 xlabel('Time (s)')
 ylabel('y position (m)')
 title('Y position triggered by CO')
+
+% plot xy of landing and take offs solo and co
+solo_x=[behavioral_modes.solo_bsp_struct(1).bsp_x_pos;behavioral_modes.solo_bsp_struct(2).bsp_x_pos];    
+solo_y=[behavioral_modes.solo_bsp_struct(1).bsp_y_pos;behavioral_modes.solo_bsp_struct(2).bsp_y_pos];
+solo_x=cell2mat(solo_x');
+solo_y=cell2mat(solo_y');
+co_x=[behavioral_modes.co_data.co_bsp_data(1).bsp_x_pos_at_co  ;behavioral_modes.co_data.co_bsp_data(2).bsp_x_pos_at_co ];    
+co_y=[behavioral_modes.co_data.co_bsp_data(1).bsp_y_pos_at_co  ;behavioral_modes.co_data.co_bsp_data(2).bsp_y_pos_at_co  ];
+co_x=cell2mat(co_x');
+co_y=cell2mat(co_y');
+
+axes('position',[x_position(5) y_position(1) panel_size]);
+plot(solo_x,solo_y,'k.'); hold on;
+plot(co_x,co_y,'m.'); hold on;
+
+xlim([min(solo_x)-1, min(solo_x)+10])
+xlabel('x position (m)')
+ylabel('y position (m)')
+title('XY pos near ball 1')
+
+axes('position',[x_position(5) y_position(2) panel_size]);
+plot(solo_x,solo_y,'k.'); hold on;
+plot(co_x,co_y,'m.'); hold on;
+xlim([max(solo_x)-10, max(solo_x)+1])
+xlabel('x position (m)')
+ylabel('y position (m)')
+title('XY pos near ball 2')
 
 % save
 fig_name=fullfile(behave_analysis_fig_dir_out,['behavioral_analysis_bat_',num2str(bat),'_day_',num2str(day),'.tif']);
