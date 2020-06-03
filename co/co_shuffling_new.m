@@ -6,7 +6,7 @@ files = dir(cell_co_solo_initial_analysis_struct_folder);
 behavior_struct_names = {files.name};
 %% for each cell
 for ii_cell = 3:length(behavior_struct_names)
-    
+    ii_cell
     % load cell's egocentric struct
     struct_name = behavior_struct_names{ii_cell};
     file_name = fullfile(cell_co_solo_initial_analysis_struct_folder,struct_name);
