@@ -5,7 +5,7 @@ load(dir_param_file_name)
 
 us_factor=1e6;
 %% define general behavioral variables:
-general_behavior_data_file_name=fullfile(behave_day_struct_folder,['general_behave_analysis_bat',num2str(bat),'_day',num2str(day),'.mat']);
+general_behavior_data_file_name=fullfile(behave_day_struct_folder,['general_behave_analysis_bat',num2str(bat),'_day',day,'.mat']);
 get_general_behavior_data(bsp_data,tag_i,general_behavior_data_file_name,ball_pos_name,behave_ts,behav_params_file_name)
  
 load(general_behavior_data_file_name)
@@ -28,7 +28,7 @@ behav_modes_plot(behav).name='Solo';
 [~,behav_modes_plot(behav).start,behav_modes_plot(behav).end]=find_length_of_consecutive_ind(solo_ind,length(pos_self_x));
 
 %% manually remove solo ind:
-manually_added_file_name=fullfile(behave_day_struct_folder,['manually_removed_solo_bat_',num2str(bat),'_day_',num2str(day),'.mat']);
+manually_added_file_name=fullfile(behave_day_struct_folder,['manually_removed_solo_bat_',num2str(bat),'_day_',day,'.mat']);
 
 if correct_manually
     try
@@ -60,7 +60,7 @@ end
 
 behavioral_modes.solo_ind=solo_ind;
 %% create solo bsp structs:
-solo_struct_name=fullfile(behave_solo_struct_folder,['solo_bsp_data_bat_',num2str(bat),'_day_',num2str(day)]);
+solo_struct_name=fullfile(behave_solo_struct_folder,['solo_bsp_data_bat_',num2str(bat),'_day_',day]);
 [solo_bsp_struct]=create_solo_bsp_data_cells(behavioral_modes,general_behavior_data_file_name,dis_criteria,new_flight_time_criteria,solo_struct_name);
 behavioral_modes.solo_bsp_struct=solo_bsp_struct;
 %% Tracking
@@ -93,7 +93,7 @@ behav_modes_plot(behav).name='being tracked';
 co_data.CO_point_auto=CO_point_auto;
 co_data.removed_co_ind_auto=removed_co_ind_auto;
 %% corect manually co:
-manually_added_file_name=fullfile(behave_day_struct_folder,['manually_added_co_bat_',num2str(bat),'_day_',num2str(day),'.mat']);
+manually_added_file_name=fullfile(behave_day_struct_folder,['manually_added_co_bat_',num2str(bat),'_day_',day,'.mat']);
 manually_added_co=[];
 if correct_manually
     try
@@ -125,7 +125,7 @@ else
 end
 
 %% find CO window and remove non-valid co
-co_struct_name=fullfile(behave_co_struct_folder,['co_bsp_data_bat_',num2str(bat),'_day_',num2str(day)]);
+co_struct_name=fullfile(behave_co_struct_folder,['co_bsp_data_bat_',num2str(bat),'_day_',day]);
 %remove co that didn't pass threshold of distance
 [co_bsp_data,co_ind]=create_co_bsp_data_cells(all_point_co_ind,general_behavior_data_file_name,time_before_after_co_for_co_window,dis_before_after_co,min_dist_opposite_dirs_before_after_CO,co_struct_name,behav_params_file_name,bat,day);
 %remove_co_auto=find_non_valid_co(potential_CO_point,general_behavior_data_file_name);
@@ -145,7 +145,7 @@ behav_modes_plot(behav).name='CO';
 
 %% plot final results
 plot_behav_after_correction(general_behavior_data_file_name,behav_modes_plot,bat,day,co_data)
-file_name=fullfile(behave_analysis_fig_dir_out,['behavioral_modes_bat_',num2str(bat),'_day_',num2str(day),'.jpg']);
+file_name=fullfile(behave_analysis_fig_dir_out,['behavioral_modes_bat_',num2str(bat),'_day_',day,'.jpg']);
 saveas(gcf,file_name)
 
 %% save all
@@ -168,7 +168,7 @@ saveas(gcf,file_name)
 
 %% save struct:
 
-file_name=fullfile(behave_day_struct_folder,['behavioral_modes_bat_',num2str(bat),'_day_',num2str(day),'.mat']);
+file_name=fullfile(behave_day_struct_folder,['behavioral_modes_bat_',num2str(bat),'_day_',day,'.mat']);
 save(file_name,'behavioral_modes')
 
 
