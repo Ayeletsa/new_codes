@@ -1,4 +1,4 @@
-function per_field=per_field_analysis(field_edges,spikes,bsp,per_field_params_file_name,solo_data)
+function [per_field,per_field_tunings_corrs]=per_field_analysis(field_edges,spikes,bsp,per_field_params_file_name,solo_data)
 
 load(per_field_params_file_name)
 
@@ -16,7 +16,7 @@ for field_i=1:size(field_edges,2)
             = fn_compute_generic_1D_tuning_new_smooth_new_again ...
             (bsp_vec,spikes_vec,dis_per_field_bin_vec_of_center, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0,old_smooth,smooth_window,smooth_type,smooth_tol);
         %2. run shuffle:
-        dis_signif_field=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,dis_per_field_bin_vec_of_center, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth);
+        dis_signif_field=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,dis_per_field_bin_vec_of_center, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth,min_dis_pos_neg);
         %3. compute properties:
         per_field=per_field_prop(per_field,field_i,tuning_dis_x_fr_per_field,timespent_binned_new_smooth);
         %4. save data to struct:
@@ -34,7 +34,7 @@ for field_i=1:size(field_edges,2)
             = fn_compute_generic_1D_tuning_new_smooth_new_again ...
             (bsp_vec,spikes_vec,time_per_field_bin_vec_of_center, time_spent_minimum_for_1D_bins_per_field, frames_per_second, 0,0,0,old_smooth,smooth_window,smooth_type,smooth_tol);
         %2. run shuffle:
-        time_signif_field=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,time_per_field_bin_vec_of_center, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth);
+        time_signif_field=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,time_per_field_bin_vec_of_center, time_spent_minimum_for_1D_bins_per_field, frames_per_second,num_shuffles_per_field,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth,min_dis_pos_neg);
         %3. save data to struct:        
         per_field(field_i).time_signif_field=time_signif_field;
         per_field(field_i).tuning_time_fr_per_field=tuning_time_fr_per_field;
@@ -43,7 +43,15 @@ for field_i=1:size(field_edges,2)
         %===================================
         per_field(field_i).solo_firing_rates_time_bins=per_field_solo_variability(field_edges,solo_data,time_per_field_X_bin_size,frames_per_second);
     else
-        per_field(field_i).tuning_time_fr_per_field=nan;
-        per_field(field_i).tuning_dis_x_fr_per_field=nan;
+        per_field(field_i).tuning_time_fr_per_field=nan*zeros(1,length(time_per_field_bin_vec_of_center));
+        per_field(field_i).tuning_dis_x_fr_per_field=nan*zeros(1,length(time_per_field_bin_vec_of_center));
     end
+end
+
+%% compute corrs per cell:
+% run only if there is more than one field
+if size(field_edges,2)>1
+    per_field_tunings_corrs=corr(reshape([per_field.tuning_dis_x_fr_per_field],length(dis_per_field_bin_vec_of_center),[]),'rows','pairwise');
+else
+    per_field_tunings_corrs=nan;
 end
