@@ -45,7 +45,7 @@ color_other=[1 0 0];
 
 % title:
 axes('position', [0.4, y_position(1), 0.1,  0.1]);
-title(sprintf('bat %d day %d',bat,day), 'FontSize', 11, 'FontWeight', 'Bold');
+title(sprintf('bat %d day %s',bat,day), 'FontSize', 11, 'FontWeight', 'Bold');
 box off;
 axis off;
 % else
