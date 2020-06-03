@@ -1,4 +1,4 @@
-function behavioral_modes=plot_behavior_and_correct_modes(behav_modes_plot,behavioral_modes,bsp_proc_data,tag_i,bat,day,behave_analysis_fig_dir_out,behav_params_file_name,dir_param_file_name,general_behavior_data_file_name,behave_day_struct_folder)
+function behavioral_modes=plot_behavior_and_correct_modes(behav_modes_plot,behavioral_modes,bsp_proc_data,tag_i,bat,day,behave_analysis_fig_dir_out,behav_params_file_name,dir_param_file_name,general_behavior_data_file_name,behave_day_struct_folder,manually_corrected_file_name)
 load(behav_params_file_name)
 load(dir_param_file_name)
 load(general_behavior_data_file_name)
@@ -167,11 +167,9 @@ if correct_manually
         manually_added.solo_ind_removed=[];
     end
     
-    file_name=fullfile(behave_day_struct_folder,['manually_added_behavioral_modes_bat_',num2str(bat),'_day_',num2str(day),'.mat']);
-    save(file_name,'manually_added')
+    save(manually_corrected_file_name,'manually_added')
 else
-    file_name=fullfile(behave_day_struct_folder,['manually_added_behavioral_modes_bat_',num2str(bat),'_day_',num2str(day),'.mat']);
-    load(file_name)
+    load(manually_corrected_file_name)
     %add:
     relev_fields=fields(manually_added);
     
