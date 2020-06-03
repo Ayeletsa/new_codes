@@ -10,6 +10,8 @@ params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\all_bats_cell_struc
 % data output:
 main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
 params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
+params.dirs.behave_co_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\co_structs\'];
+params.dirs.behave_solo_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\solo_structs\'];
 params.dirs.ball_position_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\ball_pos\'];
 params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\co_solo_initial_analysis\'];
 %params.dirs.cell_co_solo_initial_analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_1.5_th_1\';
@@ -51,21 +53,41 @@ params.behav.dis_before_after_co = 40; % in meters
 
 %% parameters for behavioral modes
 params.behav.load_struct=1; %1 if you want to load behavioral struct
-params.behav.correct_manually=0;
+params.behav.correct_manually=1;
 params.behav.frame_per_second=100;
+params.behav.csaps_p = 1e-5; %for vel computation
+
 params.behav.min_solo_length=2*params.behav.frame_per_second; %samples
 params.behav.min_tracking_length=3*params.behav.frame_per_second; %samples
 params.behav.dist_thresh_tracking=20; %meters
 params.behav.dist_thresh_solo=40; %meters
-params.behav.dist_thresh_CO=5; %meters
-params.behav.CO_window=[20 20]; %meters
-params.behav.max_wind_CO=2*params.behav.frame_per_second;
-params.behav.min_time_before_CO=2*params.behav.frame_per_second;
-params.behav.UT_window=params.behav.frame_per_second;
-params.behav.UT_time_from_CO=2*params.behav.frame_per_second;% 1sec
-params.behav.UT_distance_from_CO=10; %m
+params.behav.min_dist_opposite_dirs_before_after_CO=5; %meters
+params.behav.time_before_after_co_for_co_window=3.5; %(seconds) for defining the window around the co
+%params.behav.CO_window=[20 20]; %meters
+%params.behav.max_wind_CO=2*params.behav.frame_per_second;
+%params.behav.min_time_before_CO=2*params.behav.frame_per_second;
+%params.behav.UT_window=params.behav.frame_per_second;
+%params.behav.UT_time_from_CO=2*params.behav.frame_per_second;% 1sec
+%params.behav.UT_distance_from_CO=10; %m
+params.behav.distnace_UT_from_ball=6;%m
+params.behav.min_diff_UT=30;% samples
+params.behav.dis_before_after_ut=1; %m
+params.behav.time_before_ut_window=3; %s
+
 params.behav.bins_to_remove_from_edge_CO_hist=1;
 params.behav.manual_min_dis_from_CO=100; %for manual correction check that the CO is close
+%new flight criteria (distance and time between bsp samples)
+% when shuffling, we shuffle each flight separately. This is a proxy for when a new flight begins:
+% 1. consecutive samples that have a jump in space
+% 2. consecutive samples that have a time gap
+% can be done with closer attention...
+params.behav.dis_criteria = [20 20];
+params.behav.new_flight_time_criteria = 1e5;
+
+% interpolation of co with missing data
+params.behav.dis_between_bats_interpolate_thresh=1; %(m)
+params.behav.min_dist_to_co_to_interp=5; %m
+params.behav.min_hole_size_to_interp=2; %sec
 
 
 %save
@@ -91,8 +113,8 @@ params.solo.frames_per_second=params.behav.frame_per_second;
 % 1. consecutive samples that have a jump in space
 % 2. consecutive samples that have a time gap
 % can be done with closer attention...
-params.solo.dis_criteria = [20 20];
-params.solo.new_flight_time_criteria = 1e5;
+params.solo.dis_criteria = params.behav.dis_criteria;
+params.solo.new_flight_time_criteria = params.behav.new_flight_time_criteria;
 
 %save
 solo_params=params.solo;
@@ -132,6 +154,7 @@ save(param_file_name, '-struct', 'fields_params')
 params.co.time_spent_minimum_for_1D_bins=0.2;
 params.co.frames_per_second=params.behav.frame_per_second;
 params.co.alpha_val=5;
+params.co.time_before_after_co_for_co_window=params.behav.time_before_after_co_for_co_window; %(seconds) for defining the window around the co
 
 % a. Egocentric time bins: 
 params.co.time_before_after_co=params.behav.time_before_after_co;
@@ -173,7 +196,7 @@ co_params=params.co;
 param_file_name=fullfile(param_folder,'co_params.mat');
 save(param_file_name, '-struct', 'co_params')
 %% Per field params:
-params.per_field.per_field_to_plot=3; %1= width based on half hight 2=width based on 5-95% 3=width based on all spikes
+params.per_field.per_field_to_plot=1; %1= width based on half hight 2=width based on 5-95% 3=width based on all spikes
 params.per_field.time_spent_minimum_for_1D_bins_per_field=0.1;
 params.per_field.frames_per_second=100;
 %bins params:
@@ -206,6 +229,21 @@ params.per_field.old_smooth=0;
 params.per_field.smooth_window=3;
 params.per_field.smooth_type=1;
 params.per_field.smooth_tol=1;
+
+%Per field population params:
+%-----------------------------
+%1. duing all pop analysis on nice place cells: for now as in pop vec analysis
+params.per_field.min_n_spike=100;  
+params.per_field.SI_threshold=1;
+
+%2. duing all pop analysis on nice tuning per field:
+params.per_field.min_n_spike_per_field=30;
+params.per_field.min_r_length_per_field=0.5; %min length of non nan firing rate in per field
+
+%3. tuning width params:
+params.per_field.min_dis_pos_neg=0.25*1e6;%us
+
+
 %save
 per_field_params=params.per_field;
 param_file_name=fullfile(param_folder,'per_field_params.mat');
@@ -267,10 +305,10 @@ save(param_file_name, '-struct', 'co_shuffle_params')
 
 %% CO population params:
 
-params.co_population.min_spikes = 30;
+params.co_population.min_spikes = 30; %during co per direction
 params.co_population.min_ego_inf = 0.1;
 params.co_population.min_even_odd = 0.2;
-params.co_population.alpha = .05;
+params.co_population.alpha_val = .05;
 params.co_population.interneuron_firing_rate = 10;
 params.co_population.max_for_pyramidal=5;
 %save
@@ -283,8 +321,8 @@ save(param_file_name, '-struct', 'co_population_params')
 params.population_vector.n_shuffles=100;%temp
 
 %cell selection:
-params.population_vector.SI_threshold=1;
-params.population_vector.min_n_spike=[100];
+params.population_vector.SI_threshold=params.per_field.SI_threshold;
+params.population_vector.min_n_spike=params.per_field.min_n_spike;
 params.population_vector.solo_time_spent_minimum_for_1D_bins=0.03;%need to check!
 
 %egocentric bins:
