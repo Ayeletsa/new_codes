@@ -79,7 +79,7 @@ if abs(distance_between_bats_in_co)>dis_between_bats_interpolate_thresh
     
     %%
      fig_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\behavioral_modes\co_time_interp\';
-    saveas(gcf,fullfile(fig_folder,sprintf('interp_co_bat_%d_day_%d_dir_%d_co_%d.jpg',bat,day,ii_dir,ii_co)))
+    saveas(gcf,fullfile(fig_folder,sprintf('interp_co_bat_%d_day_%s_dir_%d_co_%d.jpg',bat,day,ii_dir,ii_co)))
     close all
     else
         co_time_usec=[];
