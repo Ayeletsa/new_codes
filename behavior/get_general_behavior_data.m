@@ -1,4 +1,5 @@
 function get_general_behavior_data(bsp_data,tag_i,general_behavior_data_file_name,ball_pos_name,behave_ts,behav_params_file_name)
+load(behav_params_file_name)
 us_factor=1e6;
 % interpolate position of the other bat to have the same ts for both
 % bats
@@ -29,15 +30,12 @@ only_this_bat_is_flying_ind_FE=find(ismember(FE_ind,only_this_bat_is_flying_ind_
 pos_self_x=bsp_proc_data(tag_i).pos(:,1);
 pos_self_y=bsp_proc_data(tag_i).pos(:,2);
 pos_self_x_FE=pos_self_x(FE_ind);
-velocity_self=(diff([0; pos_self_x])./diff([0;bsp_proc_data(tag_i).ts])).*us_factor;
-velocity_self(1)=NaN;
-velocity_self(isnan(pos_self_x))=NaN;
-velocity_self_FE=velocity_self(FE_ind);
-% find the xy velocity
-pos_self_xy=bsp_proc_data(tag_i).pos(:,1:2);
-velocity_self_xy=(sqrt(nansum(diff([0 0;pos_self_xy]).^2,2))./diff([0;bsp_proc_data(tag_i).ts])).*us_factor;
-velocity_self_xy(1)=NaN;
-velocity_self_xy(isnan(pos_self_x))=NaN;
+
+%vel
+velocity_self=bsp_proc_data(tag_i).vel_x;
+velocity_self_xy=bsp_proc_data(tag_i).vel_xy;
+velocity_self_FE=bsp_proc_data(tag_i).vel_x_FE;
+velocity_self_xy_FE=bsp_proc_data(tag_i).vel_xy_FE;
 
 
 %flights position and direction other:
@@ -46,11 +44,11 @@ pos_other_x=bsp_proc_data(3-tag_i).pos(:,1);
 pos_other_y=bsp_proc_data(3-tag_i).pos(:,2);
 
 pos_other_x_FE=pos_other_x(FE_ind);
-velocity_other=(diff([0; bsp_proc_data(3-tag_i).pos(:,1)])./diff([0;bsp_proc_data(3-tag_i).ts])).*us_factor;
-velocity_other(1)=NaN;
+velocity_other=bsp_proc_data(3-tag_i).vel_x;
+
 velocity_other_FE=velocity_other(FE_ind);
+%set ind where bat didn't fly to zero:
 velocity_other_FE(only_this_bat_is_flying_ind_FE)=0;
-velocity_other(isnan(pos_other_x))=NaN;
 
 %Distance between the bats:
 %-----------------------------------------------------------------------------
