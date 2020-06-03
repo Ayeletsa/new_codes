@@ -1,4 +1,4 @@
-function [CO_ind,CO_point,CO_event]=find_CO_ind(general_behavior_data_file_name,behav_params_file_name)
+function [CO_ind,CO_point,CO_event]=find_potential_CO_ind(general_behavior_data_file_name,behav_params_file_name)
 load(general_behavior_data_file_name)
 load(behav_params_file_name)
 
@@ -18,6 +18,7 @@ relevant_flights_FE=intersect(both_bats_are_flying_FE,different_flight_direc_ind
 
 CO_ind=[];
 CO_point=[];
+CO_event={};
 
 count=0;
 for CO_i=1:length(distance_change_sign)
@@ -50,3 +51,4 @@ for CO_i=1:length(distance_change_sign)
         end
     end
 end
+
