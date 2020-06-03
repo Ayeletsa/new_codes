@@ -1,4 +1,4 @@
-function  co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name,per_field_params_file_name,field_param_file_name,bat,day,co_struct_name)
+function  co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_data,co_param_file_name,per_field_params_file_name,field_param_file_name,co_struct_name)
 load(co_param_file_name)
 us_factor=1e6;
 %% for field detection durin co:
