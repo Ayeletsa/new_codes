@@ -3,7 +3,12 @@ load(general_behavior_data_file_name)
 load(behav_params_file_name)
 %Solo is defined when the bats is flying alone or when both are flying but they
 %are far away from each other:
-potential_solo_ind=FE_ind(unique([find(abs(distnace_other_from_self_FE)>dist_thresh_solo);only_this_bat_is_flying_ind_FE]));
+%a. only this bat is flying:
+a=only_this_bat_is_flying_ind_FE;
+% b. both bats are flying but distance is lower than thresh:
+b=intersect(both_bats_are_flying_FE, find(abs(distnace_other_from_self_FE)>dist_thresh_solo));
+potential_solo_ind=FE_ind(unique([a;b]));
+
 [solo_length,solo_start,solo_end]=find_length_of_consecutive_ind(potential_solo_ind,length(pos_self_x));
 long_solo_ind=find(solo_length>min_solo_length);
 % take only long flights:
