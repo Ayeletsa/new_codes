@@ -33,8 +33,8 @@ for tag_i=1:length(bsp_data)
     if ~exist(ball_pos_name)
         if tag_i==1 %do it just once per day
             figure('units','normalized','outerposition',[0 0 1 1])
-            landing_x=pos_x(vel<landing_vel);
-            landing_y=pos_y(vel<landing_vel);
+            landing_x=pos_x(vel_xy<landing_vel);
+            landing_y=pos_y(vel_xy<landing_vel);
             
             % plot the ball area to choose the ball position:
             plot(landing_x,landing_y,'.')
