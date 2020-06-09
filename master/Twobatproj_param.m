@@ -1,14 +1,15 @@
-function Twobatproj_param(param_folder)
+function Twobatproj_param(cells_struct_dir,main_analysis_dir,param_folder)
 
 %% folders:
-% data input:
-params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\all_bats_cell_structs\';
-%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
-%params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
-%params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2299';
-
-% data output:
-main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
+%load('local_computer_dirs')
+% % data input:
+ params.dirs.cells_struct_dir=cells_struct_dir;
+% %params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2336\cell_structs\';
+% %params.dirs.cells_struct_dir='D:\Ayelet\Data\Data_Nlg_Proc\yr_2018_bat_2389\cell_structs\';
+% %params.dirs.cells_struct_dir='L:\Data\2batproj\Data_Nlg_Proc\yr_2019_bat_2299';
+% 
+% % data output:
+% main_analysis_dir='D:\Ayelet\2bat_proj\Analysis\new_code\';
 params.dirs.behave_day_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\'];
 params.dirs.behave_co_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\co_structs\'];
 params.dirs.behave_solo_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\solo_structs\'];
@@ -16,6 +17,7 @@ params.dirs.ball_position_folder=[main_analysis_dir,'\analysis_structs\behaviora
 params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\co_solo_initial_analysis\'];
 %params.dirs.cell_co_solo_initial_analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_1.5_th_1\';
 params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\analysis_structs\co_shuffling_struct'];
+params.dirs.solo_shuffle_folder_name=[main_analysis_dir,'\analysis_structs\solo_shuffling_struct'];
 % figures:
 params.dirs.behave_analysis_fig_dir_out=[main_analysis_dir,'figures\initial_behavior_analysis\'];
 params.dirs.co_fig_folder_name=[main_analysis_dir,'figures\basic_co_analysis'];
@@ -148,6 +150,20 @@ params.fields.parmaset=1;
 %save
 fields_params=params.fields;
 param_file_name=fullfile(param_folder,'fields_params.mat');
+save(param_file_name, '-struct', 'fields_params')
+%% solo shuffle:
+params.solo_shuffle_params.shuffles_num=1000;
+params.solo_shuffle_params.shuffles_max_shift=30; %check why with Tamir
+
+params.solo_shuffle_params.SI_thr=1;
+params.solo_shuffle_params.min_n_spike=100;
+params.solo_shuffle_params.alpha_thres=95; %Tamir had it on 99 decide what we want
+
+params.solo_shuffle_params.cell_co_solo_initial_analysis_struct_folder = params.dirs.cell_co_solo_initial_analysis_struct_folder;
+params.solo_shuffle_params.solo_shuffle_folder_name=params.dirs.solo_shuffle_folder_name;
+%save
+fields_params=params.solo_shuffle_params;
+param_file_name=fullfile(param_folder,'solo_shuffle_params.mat');
 save(param_file_name, '-struct', 'fields_params')
 
 %% parameters for CO analysis basic analysis
@@ -354,5 +370,3 @@ params.population_vector.ker_SD=params.fields.ker_SD;
 population_vector_params=params.population_vector;
 param_file_name=fullfile(param_folder,'population_vector_params.mat');
 save(param_file_name, '-struct', 'population_vector_params')
-
-
