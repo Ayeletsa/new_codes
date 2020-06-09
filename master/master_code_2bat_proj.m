@@ -1,8 +1,8 @@
 %% Master code 2d proj
 clear
 % define parameters:
-param_folder='D:\Ayelet\2bat_proj\Analysis\new_code\params\';
-Twobatproj_param(param_folder)
+[cells_struct_dir,main_analysis_dir,param_folder]=local_dirs;
+Twobatproj_param(cells_struct_dir,main_analysis_dir,param_folder)
 
 behav_param_file_name=fullfile(param_folder,'behav_params.mat');
 dir_param_file_name=fullfile(param_folder,'dirs_params.mat');
@@ -10,6 +10,7 @@ solo_param_file_name=fullfile(param_folder,'solo_params.mat');
 co_param_file_name=fullfile(param_folder,'co_params.mat');
 population_param_file_name=fullfile(param_folder,'co_population_params.mat');
 co_shuffle_param_file_name=fullfile(param_folder,'co_shuffle_params.mat');
+solo_shuffle_param_file_name=fullfile(param_folder,'solo_shuffle_params.mat');
 field_param_file_name=fullfile(param_folder,'fields_params.mat');
 per_field_param_file_name=fullfile(param_folder,'per_field_params.mat');
 
