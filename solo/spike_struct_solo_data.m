@@ -12,14 +12,18 @@ for ii_dir = 1:2
     %load behavioral data for solo:
     solo_struct_name_to_load=[solo_struct_name,'_dir_',num2str(ii_dir),'.mat'];
     load(solo_struct_name_to_load)
-%% remove flights for unstabel cells:
-[logical_vec_of_active_flight]=correct_behavior_to_work_only_for_active_time_per_cell(cell_struct,bsp_ts_usec);
-ind_of_relevant_flight=find(logical_vec_of_active_flight);
-bsp_ts_usec=bsp_ts_usec(ind_of_relevant_flight);
-bsp_x_pos=bsp_x_pos(ind_of_relevant_flight);
-bsp_y_pos=bsp_y_pos(ind_of_relevant_flight);
-bsp_vel_x=bsp_vel_x(ind_of_relevant_flight);
-bsp_vel_xy=bsp_vel_xy(ind_of_relevant_flight);
+    %% remove flights for unstabel cells:
+    [logical_vec_of_active_flight]=correct_behavior_to_work_only_for_active_time_per_cell(cell_struct,bsp_ts_usec);
+    ind_of_relevant_flight=find(logical_vec_of_active_flight);
+    bsp_ts_usec=bsp_ts_usec(ind_of_relevant_flight);
+    bsp_x_pos=bsp_x_pos(ind_of_relevant_flight);
+    bsp_y_pos=bsp_y_pos(ind_of_relevant_flight);
+    bsp_vel_x=bsp_vel_x(ind_of_relevant_flight);
+    bsp_vel_xy=bsp_vel_xy(ind_of_relevant_flight);
+    
+    %%
+    start_ts=mat2cell([cellfun(@(v) v(1),bsp_ts_usec)],ones(length(bsp_ts_usec),1));
+    end_ts=mat2cell([cellfun(@(v) v(end),bsp_ts_usec)],ones(length(bsp_ts_usec),1));
 %% loop over flights to find spikes per flight:
     n_flights=length(bsp_ts_usec);
 
@@ -71,8 +75,8 @@ bsp_vel_xy=bsp_vel_xy(ind_of_relevant_flight);
     not_nan_bsp_x_pos = bsp_x_pos_mat(isfinite(bsp_x_pos_mat));
     not_nan_spikes_x_pos = spikes_x_pos_mat(isfinite(spikes_x_pos_mat));
     %create data for computing PSTH:     
-    data=[bsp_x_pos';bsp_ts_usec';spikes_x_pos';spikes_ts_usec'];
-    field_names={'pos','ts','spikes_pos','spikes_ts'};
+    data=[bsp_x_pos';bsp_ts_usec';spikes_x_pos';spikes_ts_usec';start_ts';end_ts'];
+    field_names={'pos','ts','spikes_pos','spikes_ts','start_ts','end_ts'};
     FE=cell2struct(data,field_names,1);
     %compute:
     prm.fields=load(field_param_file_name);
@@ -129,6 +133,7 @@ bsp_vel_xy=bsp_vel_xy(ind_of_relevant_flight);
     solo(ii_dir).PSTH_for_field_detection=FE_PSTH.PSTH;
     solo(ii_dir).SI=information_per_spike;
     solo(ii_dir).fields=fields;
+    solo(ii_dir).FE_struct_for_tamirs_code=FE;
 end
 
 end
