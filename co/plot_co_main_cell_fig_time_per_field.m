@@ -37,7 +37,7 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell = 3:length(behavior_struct_names)
+for ii_cell = 34:length(behavior_struct_names)
     ii_cell
     signif=0;
     %% load data
@@ -48,8 +48,11 @@ for ii_cell = 3:length(behavior_struct_names)
     behavior_struct=cell_co_solo_initial_analysis;
     bat=behavior_struct.exp_data.bat;
     day=behavior_struct.exp_data.day;
+   if isnumeric(day)
+        day=num2str(day);      
+    end
     cell_num=behavior_struct.exp_data.cell_num;
-    if ~isempty(behavior_struct.co(1).per_field_all_spk)  | ~isempty(behavior_struct.co(2).per_field_all_spk)
+    if ~isempty(behavior_struct.co(1).per_field_href)  | ~isempty(behavior_struct.co(2).per_field_href)
         % check if include cell:
         a=max([behavior_struct.solo.SI])>SI_threshold;
         b=(sum(~isnan(cell_co_solo_initial_analysis.solo(1).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(1).spikes.ts_usec(:))))>min_n_spike;
@@ -59,7 +62,7 @@ for ii_cell = 3:length(behavior_struct_names)
         cond_vec=[a,d,e];
         if sum(cond_vec)==length(cond_vec)
             
-            shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
+            shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d', day,'_c',num2str(cell_num),'.mat'];
             file_name = fullfile(co_shuffle_folder_name,shuffle_struct_name);
             if exist(file_name)
                 co_shuffle_struct=load(file_name);
@@ -74,7 +77,7 @@ for ii_cell = 3:length(behavior_struct_names)
                 %                 dis_before_after_co = behavior_struct.co(1).params.dis_before_after_co;
                 %
                 % write cell's ID
-                str = sprintf('Cell #%d, Date: %d, Bat %d',cell_num,day,bat) ;
+                str = sprintf('Cell #%d, Date: %s, Bat %d',cell_num,day,bat) ;
                 annotation('textbox',[.06 .88 .3 .1],'string',str,'EdgeColor','none','fontsize',15)
                 
                 % cell stability
@@ -126,15 +129,7 @@ for ii_cell = 3:length(behavior_struct_names)
                                 per_field=cell_co_solo_initial_analysis.co(ii_dir).per_field_href;
                                 x=[cell_co_solo_initial_analysis.solo(ii_dir).fields.edges_href];
                                 field_edges=reshape(x,2,length(x)/2);
-                            case 2
-                                per_field=cell_co_solo_initial_analysis.co(ii_dir).per_field_prc;
-                                x=[cell_co_solo_initial_analysis.solo(ii_dir).fields.edges_prc];
-                                field_edges=reshape(x,2,length(x)/2);
-                                
-                            case 3
-                                per_field=cell_co_solo_initial_analysis.co(ii_dir).per_field_all_spk;
-                                x=[cell_co_solo_initial_analysis.solo(ii_dir).fields.edges_all_spk];
-                                field_edges=reshape(x,2,length(x)/2);
+                            
                         end
                     else
                         field_edges=[];
@@ -501,7 +496,11 @@ for ii_cell = 3:length(behavior_struct_names)
                                 %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_extreme_bins==1
                                 %                                 text(x_limits(2),max_y*0.5,sprintf('SI=%.2f sig bins \n #spikes=%d',behavior_struct.co(ii_dir).firing_rate.time_information_per_spike_per_field{fr_i},behavior_struct.co(ii_dir).firing_rate.number_of_spikes_per_field{fr_i}),'color',[1 0 0])
                                 %                             else
+                                if per_field(fr_i).time_signif_field.compound==0  
                                 text(x_limits(2),max_y*0.5,sprintf('#spikes=%d',per_field(fr_i).number_of_spikes_per_field))
+                                else
+                                   text(x_limits(2),max_y*0.5,sprintf('#spikes=%d\nswitch time=%.2f\nwidth=%.2f',per_field(fr_i).number_of_spikes_per_field,per_field(fr_i).time_signif_field.relevant_switch_times./1e6,per_field(fr_i).time_signif_field.compund_width./1e6))
+                                end
                                 %
                                 %                             end
                                 %                             if behavior_struct.co(ii_dir).firing_rate.time_signif_field{1, fr_i}.signif_based_on_CV==1
@@ -530,7 +529,7 @@ for ii_cell = 3:length(behavior_struct_names)
             if ~exist(co_time_fig_folder_name)
                 mkdir(co_time_fig_folder_name)
             end
-            fig_name=fullfile(co_time_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',num2str(day),'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
+            fig_name=fullfile(co_time_fig_folder_name,['time_per_field_cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
             saveas(gcf,fig_name)
             
             %  end
