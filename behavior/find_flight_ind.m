@@ -62,7 +62,7 @@ for tag_i=1:length(bsp_data)
     %-------------------------------------------------------------
     %relevant_vel_flight=[accepted_slow_flights fast_flights'];
     flight_ind=intersect(fast_flights,not_on_ball);
-    flight_ind=intersect(flight_ind,relevant_ind);
+    %flight_ind=intersect(flight_ind,relevant_ind);
     
     
     %6. remove data before and after u-turn:
