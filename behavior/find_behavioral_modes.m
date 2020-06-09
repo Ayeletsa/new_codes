@@ -168,19 +168,13 @@ saveas(gcf,file_name)
 
 %% save struct:
 
-file_name=fullfile(behave_day_struct_folder,['behavioral_modes_bat_',num2str(bat),'_day_',day,'.mat']);
+ file_name=fullfile(behave_day_struct_folder,['behavioral_modes_bat_',num2str(bat),'_day_',day,'.mat']);
 save(file_name,'behavioral_modes')
 
 
 %% Plot 2: behavioral measurments:
 plot_basic_behav_analysis(behavioral_modes,general_behavior_data_file_name,bat,day,behav_params_file_name,behave_analysis_fig_dir_out)
 close all
-%% CORRECT AND:
-% add velocity profile of landing and take offs
-% xy of landing and take offs and mark co on them
-% velocity profile of co (not just average)
-% 
-
 
 
 
