@@ -10,6 +10,13 @@ analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\p
 co_shuffle_structs_folder = 'D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_shuffling_struct\';
 figure_folder='D:\Ayelet\2bat_proj\Analysis\new_code\figures\population\';
 
+inclusion_dir='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\inclusion_cells_struct\';
+inclusion_dir_info=dir(inclusion_dir);
+inclusion_names={inclusion_dir_info.name};
+inclusion_names([inclusion_dir_info.isdir])=[];
+cell_ind=regexp(inclusion_names{2},'cell_');
+
+cell_nums_inclusion=(cellfun(@(c) c(cell_ind+5:cell_ind+7),inclusion_names,'UniformOutput',false));
 
 %% params for valid cells during CO
 param_folder='D:\Ayelet\2bat_proj\Analysis\new_code\params\';
@@ -31,6 +38,9 @@ all_compound_pos_width=[];
 all_compound_neg_width=[];
 all_pos_rise_time=[];
 all_neg_rise_time=[];
+all_compound_pos_rise_time=[];
+all_compound_neg_rise_time=[];
+
 %% TO DO:
 %check why there are large fields
 %hist of per field sizes
@@ -43,6 +53,13 @@ file_names=file_names(find([dir_info.isdir]==0));
 for cell_i=1:length(file_names)
     % load data:
     load(fullfile(dir_data,file_names{cell_i}))
+    cell_num=cell_co_solo_initial_analysis.exp_data.cell_num;
+    %load cell's inclusion:
+    Match=cellfun(@(a) find(contains(a,num2str(cell_num))) , cell_nums_inclusion, 'UniformOutput', 0);
+    r=find(cellfun(@(c) ~isempty(c),Match));
+    load(fullfile(inclusion_dir,inclusion_names{r}))
+    
+    
     for dir_i=1:2
         
        % basic cell data:
@@ -54,20 +71,20 @@ for cell_i=1:length(file_names)
        
         %% ego signif cell
  
-        shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
-        shuffle_file_name = fullfile(co_shuffle_structs_folder,shuffle_struct_name);
+%         shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
+%         shuffle_file_name = fullfile(co_shuffle_structs_folder,shuffle_struct_name);
 
-        ego_signif_cells(cell_i,dir_i)=signif_ego_cell(shuffle_file_name,cell_co_solo_initial_analysis,dir_i,pop_param_file_name);
+        ego_signif_cells(cell_i,dir_i)=inclusion(dir_i).ego_cell;
         
         %% per field data
         %1. Test if run on per field:
        
-        a=sum(~isnan(cell_co_solo_initial_analysis.solo(dir_i).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(dir_i).spikes.ts_usec(:)))>=min_n_spike;
-        b=cell_co_solo_initial_analysis.solo(dir_i).SI>SI_threshold;
-        c=~isempty(cell_co_solo_initial_analysis.solo(dir_i).fields);
-        d=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
-        per_field_cell_cond=a & b & c & d;
-        if per_field_cell_cond 
+%         a=sum(~isnan(cell_co_solo_initial_analysis.solo(dir_i).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(dir_i).spikes.ts_usec(:)))>=min_n_spike;
+%         b=cell_co_solo_initial_analysis.solo(dir_i).SI>SI_threshold;
+%         c=~isempty(cell_co_solo_initial_analysis.solo(dir_i).fields);
+%         d=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
+%         per_field_cell_cond=a & b & c & d;
+        if inclusion(dir_i).place_cell 
           cell_dir_per_field_count=cell_dir_per_field_count+1;
 
             per_field_data=cell_co_solo_initial_analysis.co(dir_i).per_field_href;
@@ -88,7 +105,10 @@ for cell_i=1:length(file_names)
                 all_per_field_valid_tuning{cell_dir_per_field_count,field_i}=r';
                 % iso dis:
                 Isolation_dis(cell_dir_per_field_count)=cell_co_solo_initial_analysis.exp_data.Isolation_dis;
+                % n fields:
+                n_fields_per_cell_for_cell_scatter(cell_dir_per_field_count)=length([cell_co_solo_initial_analysis.solo(dir_i).fields.loc]);
 
+                n_fields_per_cell_for_field_scatter(fr_count_all)=length([cell_co_solo_initial_analysis.solo(dir_i).fields.loc]);
                 %2. get solo prop per field:
                 per_field_solo_height(fr_count_all)=solo_field_data(field_i).peak;
                 per_field_solo_nrm_height(fr_count_all)=solo_field_data(field_i).peak./nanmean(cell_co_solo_initial_analysis.solo(dir_i).PSTH_for_field_detection);
@@ -116,6 +136,8 @@ for cell_i=1:length(file_names)
                     all_compound_neg_width=[all_compound_neg_width,rise_and_width_data.neg_compound_width];
                     all_pos_rise_time=[all_pos_rise_time,rise_and_width_data.pos_rise_time];
                     all_neg_rise_time=[all_neg_rise_time,rise_and_width_data.neg_rise_time];
+                    all_compound_pos_rise_time=[all_compound_pos_rise_time,rise_and_width_data.pos_rise_time_compund];
+                    all_compound_neg_rise_time=[all_compound_neg_rise_time,rise_and_width_data.neg_rise_time_compund];
                     
               
                 else
@@ -162,6 +184,8 @@ ind=zeros(size(all_per_field_valid_tuning));
 ind(sub2ind(size(all_per_field_valid_tuning),r,c))=1;
 cells_to_remove=sum(ind,2)<=1;
 Isolation_dis_relevant_cells=Isolation_dis(~cells_to_remove);
+n_fields_per_cell_relevant_cells=n_fields_per_cell_for_cell_scatter(~cells_to_remove);
+
 per_field_tuning_curve_relevant_cells=all_per_field_valid_tuning(~cells_to_remove,:);
 % b. compute correlations within a cell and between cells:
 data=per_field_tuning_curve_relevant_cells;
@@ -174,66 +198,90 @@ figure('units','normalized','outerposition',[0 0 1 1])
 % ego tuning:
 %-----------------
 % corr between directions all cells
-subplot(3,7,1:2)
+subplot(4,7,1:2)
 plot_hists(all_cells_ego_corr_within,all_cells_ego_corr_between,'all cells egocentric corr (between directions)')
 
 % corr between directions ego signif cells
-subplot(3,7,3:4)
+subplot(4,7,3:4)
 plot_hists(ego_signif_cells_ego_corr_within,ego_signif_cells_ego_corr_between,'ego signif cells egocentric corr (between directions)')
 
 % Per field
 %--------------------------------
 % corr between per field for valid cells
-subplot(3,7,8:9)
+subplot(4,7,8:9)
 plot_hists(per_field_cells_corr_within,per_field_cells_corr_between,'per field egocentric correlations')
 
 % scatter of isolation distance and per field mean corr:
-subplot(3,7,10:11)
+subplot(4,7,10:11)
 plot_scatter(per_field_mean_corr_within',Isolation_dis_relevant_cells','mean corr per field','Isolation distance')
+
+%scatter of n fields and mean corr
+subplot(4,7,12:13)
+plot_scatter(per_field_mean_corr_within',n_fields_per_cell_relevant_cells','mean corr per field','n fields')
 
 % Tuning width and tise time -  per field:
 %-----------------------------------------
 x_vec=(0:0.2:4);
 xlimits=[0 4];
 
-subplot(3,7,15)
+subplot(4,7,15)
 data=all_pos_width./1e6;
 txt='Positive fields:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='Tuning width (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
     
-subplot(3,7,16)
+subplot(4,7,16)
 data=all_neg_width./1e6;
 txt='Negative fields:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='Tuning width (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
     
-subplot(3,7,17)
+subplot(4,7,17)
 data=all_compound_width./1e6;
 txt='Compound fields:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='Tuning width (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
     
     
-subplot(3,7,18)
+subplot(4,7,18)
 data=all_compound_pos_width./1e6;
 txt='Pos from conpound:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='Tuning width (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
     
-subplot(3,7,19)
+subplot(4,7,19)
 data=all_compound_neg_width./1e6;
 txt='Neg from compound:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='Tuning width (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
     
 x_vec=(0:0.1:2);
 xlimits=[0 2];
     
-subplot(3,7,20)
+subplot(4,7,20)
 data=all_pos_rise_time./1e6;
 txt='Pos rise time:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='rise time (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
     
-subplot(3,7,21)
+subplot(4,7,21)
 data=all_neg_rise_time./1e6;
 txt='Neg rise time:';
-hist_per_field(data,x_vec,txt,xlimits)
+x_str='rise time (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
+
+subplot(4,7,27)
+data=all_compound_pos_rise_time./1e6;
+txt='pos from combine rise time:';
+x_str='rise time (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
+
+subplot(4,7,28)
+data=all_compound_neg_rise_time./1e6;
+txt='neg from combine rise time:';
+x_str='rise time (s)';
+hist_per_field(data,x_vec,txt,xlimits,x_str)
+
 
 % save figure:
 file_name=fullfile(figure_folder,'hist_corr_directions_and_per_field.jpg');
@@ -247,7 +295,7 @@ per_field_co_SI(find(per_field_co_SI==inf))=nan;
 figure('units','normalized','outerposition',[0 0 1 1])
 
 % x= solo height
-for solo_param=1:4
+for solo_param=1:5
     switch solo_param
         case 1
             x=per_field_solo_height;
@@ -261,31 +309,28 @@ for solo_param=1:4
         case 4
             x=per_field_solo_SI;
             x_str='Solo field SI (bits/spike)';
+          case 5
+            x=n_fields_per_cell_for_field_scatter;
+            x_str='Solo n field';
             
     end
-subplot(4,4,1+4*(solo_param-1))
+subplot(5,4,1+4*(solo_param-1))
 y=per_field_co_SI;
 y_str='CO per field SI (bits/spike)';
 plot_scatter_per_field(x,y,id_per_field_non_signif,id_per_field_pos_tuning,id_per_field_neg_tuning,x_str,y_str)
 
-subplot(4,4,2+4*(solo_param-1))
-x=per_field_solo_height;
+subplot(5,4,2+4*(solo_param-1))
 y=per_field_co_CV;
-x_str='Solo field height (Hz)';
 y_str='CO per field CV';
 plot_scatter_per_field(x,y,id_per_field_non_signif,id_per_field_pos_tuning,id_per_field_neg_tuning,x_str,y_str)
 
-subplot(4,4,3+4*(solo_param-1))
-x=per_field_solo_height;
+subplot(5,4,3+4*(solo_param-1))
 y=per_field_co_modulation_depth;
-x_str='Solo field height (Hz)';
 y_str='CO per field Modulation depth';
 plot_scatter_per_field(x,y,id_per_field_non_signif,id_per_field_pos_tuning,id_per_field_neg_tuning,x_str,y_str)
 
-subplot(4,4,4+4*(solo_param-1))
-x=per_field_solo_height;
+subplot(5,4,4+4*(solo_param-1))
 y=per_field_co_sparsity;
-x_str='Solo field height (Hz)';
 y_str='CO per field sparsity';
 plot_scatter_per_field(x,y,id_per_field_non_signif,id_per_field_pos_tuning,id_per_field_neg_tuning,x_str,y_str)
 
@@ -301,7 +346,7 @@ function plot_scatter(x,y,x_name,y_name)
 scatter(x,y)
 xlabel(x_name)
 ylabel(y_name)
-title(sprintf('r=%.2f p=%.2f',r,p))
+title(sprintf('r=%.2f p=%.2f n=%d',r,p,length(x)))
 end
 
 function plot_hists(x_data,shuffle,name)
@@ -316,17 +361,17 @@ b2.FaceAlpha = 0.5;
 xlabel('r')
 ylabel('proportion')
 
-legend('shuffle','within a cell')
+legend('between cells','within a cell')
 [h,p] = kstest2(x_data,shuffle);
 
-title(sprintf('%s, p=%.2f', name,p))
+title(sprintf('%s, p=%.2f n=%d', name,p,length(x_data)))
 end
 
- function hist_per_field(data,x_vec,txt,xlimits)
+ function hist_per_field(data,x_vec,txt,xlimits,x_str)
 [h,x]=hist(data,x_vec);
 bar(x,h/sum(h))
 n_fields=length(data);
-xlabel('tuning width (s)')
+xlabel(x_str)
 ylabel('proportion')
 mean_hist=nanmean(data);
 median_hist=nanmedian(data);
@@ -348,7 +393,7 @@ xlim(xlimits)
  %[r_cmp,p_cmp]=corr(x(cmp_ind),y(cmp_ind)','rows','pairwise');
  [r_all,p_all]=corr(x',y','rows','pairwise');
  title(sprintf('ALL: r=%.2f p=%.3f',r_all,p_all))
- legend(sprintf('all:r=%.2f p=%.3f',r_non_signif,p_non_signif),sprintf('neg:r=%.2f p=%.3f',r_neg,p_neg),sprintf('pos:r=%.2f p=%.3f',r_pos,p_pos))
+ legend(sprintf('n.s:r=%.2f p=%.3f',r_non_signif,p_non_signif),sprintf('neg:r=%.2f p=%.3f',r_neg,p_neg),sprintf('pos:r=%.2f p=%.3f',r_pos,p_pos))
  xlabel(x_str)
  ylabel(y_str)
  end
