@@ -25,9 +25,13 @@ for ii_cell = 3:length(behavior_struct_names)
     % shuffle each fircetion separately
     for ii_dir = 1:2
         FE=cell_co_solo_initial_analysis.solo(ii_dir).FE_struct_for_tamirs_code;
+        if ~isempty(FE)
         shuffling_struct(ii_dir).FE_PSTH_shuffle = FE_compute_PSTH_shuffle(FE,...
                                                       shuffles_num,...
                                                       shuffles_max_shift,prm);
+        else
+            shuffling_struct(ii_dir).FE_PSTH_shuffle =nan;
+        end
     end
     
     %% save data to structs:
