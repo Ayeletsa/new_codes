@@ -18,10 +18,12 @@ params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'\ana
 %params.dirs.cell_co_solo_initial_analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_1.5_th_1\';
 params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\analysis_structs\co_shuffling_struct'];
 params.dirs.solo_shuffle_folder_name=[main_analysis_dir,'\analysis_structs\solo_shuffling_struct'];
+params.dirs.inclusion_cells_folder_name=[main_analysis_dir,'\analysis_structs\inclusion_cells_struct'];
 % figures:
 params.dirs.behave_analysis_fig_dir_out=[main_analysis_dir,'figures\initial_behavior_analysis\'];
 params.dirs.co_fig_folder_name=[main_analysis_dir,'figures\basic_co_analysis'];
 params.dirs.co_signif_cells_fig_folder_name=[params.dirs.co_fig_folder_name,'signif_cells\'];
+
 % create folders if does not exist
 dirs=fieldnames(params.dirs);
 for dir_i=1:length(dirs)
@@ -109,7 +111,11 @@ params.solo.solo_X_bins_vector=params.solo.solo_X_min:params.solo.solo_X_bin_siz
 params.solo.solo_X_bins_vector_of_centers=params.solo.solo_X_bins_vector(1:end-1)+params.solo.solo_X_bin_size/2;
 params.solo.solo_time_spent_minimum_for_1D_bins=0.75;
 params.solo.frames_per_second=params.behav.frame_per_second;
-
+% for 2d comparison:
+params.solo.allo_X_bin_size_2D=3; %changded to 3 meter
+params.solo.allo_X_bins_vector_2D=tunnel_limits(1):params.solo.allo_X_bin_size_2D:tunnel_limits(2);
+params.solo.allo_X_bins_vector_of_centers_2D=params.solo.allo_X_bins_vector_2D(1:end-1)+params.solo.allo_X_bin_size_2D/2;
+params.solo.ker_SD=1.5;
 %new flight criteria (distance and time between bsp samples)
 % when shuffling, we shuffle each flight separately. This is a proxy for when a new flight begins:
 % 1. consecutive samples that have a jump in space
@@ -128,8 +134,8 @@ params.fields.bin_centers=params.solo.solo_X_bins_vector_of_centers;
 params.fields.bin_edges=params.solo.solo_X_bins_vector;
 params.fields.bin_size = params.solo.solo_X_bin_size;
 params.fields.bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
-params.fields.ker_SD = 1.5;
-params.fields.min_time_spent_per_meter = params.solo.solo_time_spent_minimum_for_1D_bins;
+params.fields.ker_SD = params.solo.ker_SD;
+params.fields.min_time_spent_per_bin = params.solo.solo_time_spent_minimum_for_1D_bins;
 params.fields.ker_type = 'gaussian';
 params.fields.shuffles_num = 1000;
 params.fields.shuffles_max_shift = 30;
@@ -155,9 +161,6 @@ save(param_file_name, '-struct', 'fields_params')
 params.solo_shuffle_params.shuffles_num=1000;
 params.solo_shuffle_params.shuffles_max_shift=30; %check why with Tamir
 
-params.solo_shuffle_params.SI_thr=1;
-params.solo_shuffle_params.min_n_spike=100;
-params.solo_shuffle_params.alpha_thres=95; %Tamir had it on 99 decide what we want
 
 params.solo_shuffle_params.cell_co_solo_initial_analysis_struct_folder = params.dirs.cell_co_solo_initial_analysis_struct_folder;
 params.solo_shuffle_params.solo_shuffle_folder_name=params.dirs.solo_shuffle_folder_name;
@@ -173,6 +176,7 @@ params.co.alpha_val=5;
 params.co.time_before_after_co_for_co_window=params.behav.time_before_after_co_for_co_window; %(seconds) for defining the window around the co
 
 % a. Egocentric time bins: 
+params.co.ker_SD=params.fields.ker_SD;
 params.co.time_before_after_co=params.behav.time_before_after_co;
 params.co.time_X_min= -params.co.time_before_after_co * 1e6;
 params.co.time_X_max=params.co.time_before_after_co * 1e6;
@@ -195,7 +199,7 @@ params.co.sig_bins_width = 3;
 params.co.min_flights_per_bin = 3;
 params.co.tunnel_end=tunnel_limits(2);
 %e. 2D tuning distance vs allocentric (trying few different bin sizes)
-params.co.allo_X_bin_size_2D=3; %changded to 3 meter
+params.co.allo_X_bin_size_2D=params.solo.allo_X_bin_size_2D; %changded to 3 meter
 params.co.dis_X_bin_size_2D=3; %changded to 3 meter
 n_bins=round((params.co.dis_X_max-params.co.dis_X_min)/params.co.dis_X_bin_size_2D);
 params.co.allo_X_bins_vector_2D=tunnel_limits(1):params.co.allo_X_bin_size_2D:tunnel_limits(2);
@@ -276,6 +280,7 @@ params.co_shuffle.alpha_val=5; %
 
 % b. egocentric parameters
 params.co_shuffle.dis_X_bins_vector_of_centers=params.co.dis_X_bins_vector_of_centers;
+params.co_shuffle.dis_X_bins_vector=params.co.dis_X_bins_vector;
 
 % c. coherence parameters (wider bins)
 params.co_shuffle.coherence_X_min = params.co.dis_X_min;
@@ -293,16 +298,6 @@ params.co_shuffle.ker_SD = 1.5;
 params.co_shuffle.min_time_spent_per_meter = params.solo.solo_time_spent_minimum_for_1D_bins;
 params.co_shuffle.ker_type = 'gaussian';
 params.co_shuffle.pos_X_bins_vector_of_centers=params.co_shuffle.bin_centers;
-% params.co_shuffle.allo_bin_size = params.solo.solo_X_bin_size;
-% params.co_shuffle.allo_bin_limits = [params.solo.solo_X_min params.solo.solo_X_max];
-% params.co_shuffle.ker_SD=params.fields.ker_SD;
-% params.co_shuffle.tunnel_limits = tunnel_limits;
-% params.co_shuffle.pos_X_min = params.co_shuffle.tunnel_limits(1);
-% params.co_shuffle.pos_X_max = params.co_shuffle.tunnel_limits(2);
-% params.co_shuffle.pos_n_bins = 240;
-% params.co_shuffle.pos_X_bin_size = (params.co_shuffle.pos_X_max-params.co_shuffle.pos_X_min)/params.co_shuffle.pos_n_bins;
-% params.co_shuffle.pos_X_bins_vector=params.co_shuffle.pos_X_min:params.co_shuffle.pos_X_bin_size:params.co_shuffle.pos_X_max;
-% params.co_shuffle.pos_X_bins_vector_of_centers=params.co_shuffle.pos_X_bins_vector(1:end-1)+params.co_shuffle.pos_X_bin_size/2;
 
 
 %shuffling parameters
@@ -318,15 +313,40 @@ co_shuffle_params=params.co_shuffle;
 param_file_name=fullfile(param_folder,'co_shuffle_params.mat');
 save(param_file_name, '-struct', 'co_shuffle_params')
 
+%% inclusion:
+params.inclusion_cells.max_for_pyramidal=5;
+params.inclusion_cells.min_n_spike_in_air=100; % per dir
+params.inclusion_cells.min_co_per_dir=10; %for now need to check it!
+%signif place cell:
+params.inclusion_cells.SI_thr_solo=1;
+params.inclusion_cells.SI_thr_shuffle_solo=95; %Tamir had it on 99 decide what we want
+
+% signif egocentric cell:
+params.inclusion_cells.SI_thr_shuffle_co=params.inclusion_cells.SI_thr_shuffle_solo; %
+params.inclusion_cells.min_spikes_during_co = 30; 
+params.inclusion_cells.SI_thr_co = 0.1;
+params.inclusion_cells.min_even_odd = 0.2;
+
+%dirs:
+params.inclusion_cells.solo_shuffle_folder_name=params.dirs.solo_shuffle_folder_name;
+params.inclusion_cells.co_shuffle_folder_name=params.dirs.co_shuffle_folder_name;
+
+params.inclusion_cells.cell_co_solo_initial_analysis_struct_folder = params.dirs.cell_co_solo_initial_analysis_struct_folder;
+params.inclusion_cells.inclusion_cells_folder_name= params.dirs.inclusion_cells_folder_name;
+%save
+inclusion_cells_params=params.inclusion_cells;
+param_file_name=fullfile(param_folder,'inclusion_cells_params.mat');
+save(param_file_name, '-struct', 'inclusion_cells_params')
+
 
 %% CO population params:
 
-params.co_population.min_spikes = 30; %during co per direction
-params.co_population.min_ego_inf = 0.1;
-params.co_population.min_even_odd = 0.2;
-params.co_population.alpha_val = .05;
-params.co_population.interneuron_firing_rate = 10;
-params.co_population.max_for_pyramidal=5;
+params.co_population.min_spikes = params.inclusion_cells.min_spikes_during_co; %during co per direction
+params.co_population.min_ego_inf = params.inclusion_cells.SI_thr_co;
+params.co_population.min_even_odd = params.inclusion_cells.min_even_odd;
+params.co_population.alpha_val = params.inclusion_cells.SI_thr_shuffle_co;
+params.co_population.interneuron_firing_rate = 10; %??????
+params.co_population.max_for_pyramidal=params.inclusion_cells.max_for_pyramidal;
 %save
 co_population_params=params.co_population;
 param_file_name=fullfile(param_folder,'co_population_params.mat');
@@ -350,7 +370,7 @@ params.population_vector.ego_bin_end=params.population_vector.ego_range(1)+param
 params.population_vector.ego_bin_center=[params.population_vector.ego_bin_start+params.population_vector.ego_bin_end]./2;
 params.population_vector.ego_bin_dis=params.population_vector.ego_range(1):params.population_vector.step:params.population_vector.ego_range(2);
 %data in y:
-params.population_vector.run_only_on_intersent_data=1;
+params.population_vector.run_only_on_intersent_data=0;
 %params.population_vector.full_data=0;
 
 %allocentric tuning params:
@@ -370,3 +390,4 @@ params.population_vector.ker_SD=params.fields.ker_SD;
 population_vector_params=params.population_vector;
 param_file_name=fullfile(param_folder,'population_vector_params.mat');
 save(param_file_name, '-struct', 'population_vector_params')
+
