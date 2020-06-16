@@ -5,7 +5,7 @@ us_factor=1e6;
 prm.fields=load(field_param_file_name);
 prm.fields.min_flights_with_spikes_prc=0.1;
 prm.fields.min_flights_with_spikes=3;
-params.fields.min_time_spent_per_meter=0.2;
+prm.fields.min_time_spent_per_bin=0.2;
 %NEED TO TAKE IT TO PARAMS IF I WILL USE IT
 %
 %% load spikes:
@@ -30,6 +30,8 @@ for ii_dir = 1:2
     bsp_y_diff_co=bsp_y_diff_co(ind_of_relevant_flight);
     bsp_y_pos_at_co=bsp_y_pos_at_co(ind_of_relevant_flight);
     all_dir_co_times_usec=all_dir_co_times_usec(ind_of_relevant_flight);
+    
+    bsp.ind_of_relevant_flight = ind_of_relevant_flight;
 
 %%
 
@@ -144,22 +146,19 @@ for ii_dir = 1:2
     bsp_vec = bsp.time_to_co(isfinite(bsp.time_to_co));
     spikes_vec = spikes.time_to_co(isfinite(spikes.time_to_co));
     
-    [~, ~, ~, time_to_co_fr, ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth ...
-        (bsp_vec,spikes_vec,time_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+    [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,time_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
+
     
-    firing_rate.time_to_co = [time_to_co_fr;time_X_bins_vector_of_centers];
+    firing_rate.time_to_co = [PSTH;time_X_bins_vector_of_centers];
     
     % b. relative distance
     bsp_vec = bsp.dis_m(isfinite(bsp.dis_m));
     spikes_vec = spikes.dis_m(isfinite(spikes.dis_m));
     
-    [~, ~, ~, dis_m_fr, ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth ...
-        (bsp_vec,spikes_vec,dis_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-    
-    firing_rate.dis_m = [dis_m_fr;dis_X_bins_vector_of_centers];
-    
+    [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,dis_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
+    [SI_bits_spike, SI_bits_sec] = computeSI(PSTH,time_spent);
+    firing_rate.dis_m = [PSTH;dis_X_bins_vector_of_centers];
+    firing_rate.dis_m_SI=SI_bits_spike;
     % c. allocentric position
    
     % calculate solo firing rate without overlapping spikes
@@ -202,25 +201,17 @@ for ii_dir = 1:2
     bsp_vec = bsp.x_pos(isfinite(bsp.x_pos));
     spikes_vec = spikes.x_pos(isfinite(spikes.x_pos));
     
-    
-    [~, ~, ~, allo_x_pos_fr_for_2D, ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth ...
-        (bsp_vec,spikes_vec,allo_X_bins_vector_of_centers_2D, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-    
-    firing_rate.allo_x_pos_fr_for_2D = allo_x_pos_fr_for_2D;
+    [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,allo_X_bins_vector_2D,time_spent_minimum_for_1D_bins,ker_SD);
+
+    firing_rate.allo_x_pos_fr_for_2D = PSTH;
     
     %ego (dis) for the 2D plot
     bsp_vec = bsp.dis_m(isfinite(bsp.dis_m));
     spikes_vec = spikes.dis_m(isfinite(spikes.dis_m));
+       [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,dis_X_bins_vector_2D,time_spent_minimum_for_1D_bins,ker_SD);
+ 
     
-    
-    [~, ~, ~, dis_x_pos_fr_for_2D, ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth ...
-        (bsp_vec,spikes_vec,dis_X_bins_vector_of_centers_2D, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-    
-    firing_rate.dis_x_pos_fr_for_2D = dis_x_pos_fr_for_2D;
-    
-    
+    firing_rate.dis_x_pos_fr_for_2D = PSTH;
     
     
     
