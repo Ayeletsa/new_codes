@@ -11,14 +11,15 @@ neg_rise_time=per_field_time_signif_data.neg_rise_time_interp;
 neg_rise_time(isnan(neg_rise_time))=[];
 
 %define the tuning for coulring in plot if it is pos or neg:
-pos_per_field_tuning=~isempty(pos_width);
-neg_per_field_tuning=~isempty(neg_width);
+pos_per_field_tuning=~isempty(~isnan(pos_width));
+neg_per_field_tuning=~isempty(~isnan(neg_width));
 
 %initialize for compound:
 compound_width=[];
 pos_compound=[];
 neg_compound=[];
-
+pos_rise_time_compund=[];
+neg_rise_time_compund=[];
 if ~isempty(pos_width) & ~isempty(neg_width) % if there are both positive and negative
     x_pos=per_field_time_signif_data.width_line_x_pos_interp;
     x_neg=per_field_time_signif_data.width_line_x_neg_interp;
@@ -32,6 +33,8 @@ if ~isempty(pos_width) & ~isempty(neg_width) % if there are both positive and ne
         compound_width=[max([x_pos(:);x_neg(:)])-min([x_pos(:);x_neg(:)])];
         pos_compound=sum(pos_width); %think how we want to compute this if there is more than one pos!
         neg_compound=sum(neg_width);
+        pos_rise_time_compund=pos_rise_time;
+        neg_rise_time_compund=neg_rise_time;
         pos_width=[];
         neg_width=[];
         neg_rise_time=[];
@@ -49,7 +52,8 @@ rise_and_width_data.neg_rise_time=neg_rise_time;
 rise_and_width_data.pos_rise_time=pos_rise_time;
 rise_and_width_data.pos_per_field_tuning=pos_per_field_tuning;
 rise_and_width_data.neg_per_field_tuning=neg_per_field_tuning;
-
+rise_and_width_data.pos_rise_time_compund=pos_rise_time_compund;
+rise_and_width_data.neg_rise_time_compund=neg_rise_time_compund;
 end
 
 
