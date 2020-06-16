@@ -5,7 +5,7 @@
 % we just take all spikes and randomly distribute them between all
 % positions
 
-function [signif_field]=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,dis_X_bins_vector_of_centers, time_spent_minimum_for_1D, frames_per_second,num_shuffles,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth);
+function [signif_field]=shuffling_per_field_analysis_new_smooth(bsp_vec,spikes_vec,dis_X_bins_vector_of_centers, time_spent_minimum_for_1D, frames_per_second,num_shuffles,alpha_val,old_smooth,smooth_window,smooth_type,smooth_tol,width_at_heigth,min_dis_pos_neg,distance);
 number_of_spikes=length(spikes_vec);
 
 behav_length=length(bsp_vec);
@@ -48,6 +48,7 @@ prct_alpha_max=prctile(r(2:end,:),100-benf_correction);
 prct_alpha_min=prctile(r(2:end,:),benf_correction);
 mid_prctile_for_width=prctile(r(2:end,:),width_at_heigth);
 sig_bins=find(r(1,:)>prct_alpha_max | r(1,:)<prct_alpha_min);
+
 if ~isempty(sig_bins)
     signif_field.signif_based_on_extreme_bins=1;
     signif_field.signif_bins=sig_bins;
@@ -83,12 +84,48 @@ signif_field.number_of_spikes_per_field=number_of_spikes;
 %3. compute z scores:
 zscore_shuffle=zscore(r);
 signif_field.zscore_data=zscore_shuffle(1,:);
+%% check if coumpound (both neg and pos)
+relevant_switch_times=[];
+width_compund_all=[];
+if ~isempty(sig_bins)
+    if abs(min(signif_field.width_line_x_pos_interp(:))-max(signif_field.width_line_x_neg_interp(:)))<=min_dis_pos_neg | abs(max(signif_field.width_line_x_pos_interp(:))-min(signif_field.width_line_x_neg_interp(:)))<=min_dis_pos_neg
+        signif_field.compound=1;
+        %      compute switch time (time between last sig bin in pos to first in neg (or the other way)):
+        if distance==0 % run only if time
+        for pos_area_i=1:size(signif_field.width_line_x_pos_interp,1)
+            pos_position=signif_field.width_line_x_pos_interp(pos_area_i,:);
+            %find neg pos
+            neg_positions_all=signif_field.width_line_x_neg_interp;
+            for neg_pos_i=1:size(neg_positions_all,1)
+                if abs(min(pos_position)-max(neg_positions_all(neg_pos_i,:)))<=min_dis_pos_neg | abs(max(pos_position)-min(neg_positions_all(neg_pos_i,:)))<=min_dis_pos_neg
+                    pos_ind_sig_bins_in_area=find(pos_bins_val>=pos_position(1) & pos_bins_val<=pos_position(2));
+                    [~, interp_ind_pos]=min(abs(pos_bins_val(pos_ind_sig_bins_in_area)-x_vec_interp'));
 
-% save more data:
+                    neg_ind_sig_bins_in_area=find(neg_bins_val>=neg_positions_all(neg_pos_i,1) & neg_bins_val<=neg_positions_all(neg_pos_i,2));
+                    [~, interp_ind_neg]=min(abs(neg_bins_val(neg_ind_sig_bins_in_area)-x_vec_interp'));
+
+                    switch_times=[min(interp_ind_pos)-max(interp_ind_neg), min(interp_ind_neg)-max(interp_ind_pos)];
+                    bin_size_for_switch=min(diff(x_vec_interp));
+                    relevant_switch_times=[relevant_switch_times, (max(switch_times)*bin_size_for_switch)];
+                    width_compund=signif_field.width_neg_interp(neg_pos_i)+signif_field.width_pos_interp(pos_area_i);
+                    width_compund_all=[width_compund_all,width_compund];
+                end
+            end
+        end
+        signif_field.relevant_switch_times=relevant_switch_times;
+        signif_field.compund_width=sum(width_compund_all);
+        end
+    else
+        signif_field.compound=0;
+    end
+else
+    signif_field.compound=0;
+end
+%% save more data:
 
 signif_field.shuffled_data=r(2:end,:);
 signif_field.cv=cv(1);
-
+%%
     function [width,width_line_x_pos,width_line_y_pos,rise_time]=find_width(line_of_reference,ind_signif,data,x_bins,y_vec)
         length_data=length(data);
         non_nan_ind=find(~isnan(data));
