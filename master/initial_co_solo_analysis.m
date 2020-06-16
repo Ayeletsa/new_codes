@@ -42,6 +42,7 @@ for ii_cell = 3:length(data_dir_info)
     cell_co_solo_initial_analysis.exp_data.spikes_ts_usec=cell_struct.spikes.spikes_ts_usec;
     cell_co_solo_initial_analysis.exp_data.L_Ratio=cell_struct.spikes.L_Ratio;
     cell_co_solo_initial_analysis.exp_data.Isolation_dis=cell_struct.spikes.Isolation_dis;
+    
     % analyze each behavior separately
     solo_struct_name=fullfile(behave_solo_struct_folder,['solo_bsp_data_bat_',num2str(bat),'_day_',day]);
     cell_co_solo_initial_analysis.solo = spike_struct_solo_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i,solo_param_file_name,field_param_file_name,solo_struct_name);
@@ -50,6 +51,12 @@ for ii_cell = 3:length(data_dir_info)
     cell_co_solo_initial_analysis.co = spike_struct_co_data (bsp_proc_data,cell_struct,behavioral_modes,tag_i, cell_co_solo_initial_analysis.solo,co_param_file_name,per_field_param_file_name,field_param_file_name,co_struct_name);
     %behavior_struct.obs = behavior_struct_obs_data(bsp_data,cell_struct,tag_i);
     %behavior_struct.tr = behavior_struct_tracking_data(bsp_data,cell_struct,behavioral_modes,tag_i);
+    %% some general exp data for cell 
+    for dir_i=1:2
+    cell_co_solo_initial_analysis.exp_data.num_co_per_dir(dir_i)=cell_co_solo_initial_analysis.co(dir_i).info.n_co  ;
+    cell_co_solo_initial_analysis.exp_data.spikes_num_air(dir_i)=(sum(~isnan(cell_co_solo_initial_analysis.co(dir_i).spikes.ts_usec(:))))+(sum(~isnan(cell_co_solo_initial_analysis.solo(dir_i).spikes.ts_usec(:)))) ;
+    end
+    %%
     
     file_name = [cell_co_solo_initial_analysis_struct_folder,'\bat',num2str(bat),'_day_',day,'_cell_', num2str(cell_struct.cell_info.cell_num),'.mat'];
     
