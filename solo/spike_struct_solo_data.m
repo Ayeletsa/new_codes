@@ -21,6 +21,8 @@ for ii_dir = 1:2
     bsp_vel_x=bsp_vel_x(ind_of_relevant_flight);
     bsp_vel_xy=bsp_vel_xy(ind_of_relevant_flight);
     
+    solo(ii_dir).bsp.ind_of_relevant_flight = ind_of_relevant_flight;
+
     %%
     start_ts=mat2cell([cellfun(@(v) v(1),bsp_ts_usec)],ones(length(bsp_ts_usec),1));
     end_ts=mat2cell([cellfun(@(v) v(end),bsp_ts_usec)],ones(length(bsp_ts_usec),1));
@@ -82,6 +84,9 @@ for ii_dir = 1:2
     prm.fields=load(field_param_file_name);
     FE_PSTH = FE_compute_PSTH(FE,prm);
 
+    % with 2D bins size:    
+    [PSTH_for_2D_bin,spike_density,time_spent] = computePSTH([bsp_x_pos{:}],frames_per_second,[spikes_x_pos{:}],allo_X_bins_vector_2D,solo_time_spent_minimum_for_1D_bins,ker_SD);
+
     %% Field detection
     if ~isempty(not_nan_spikes_x_pos)
         %create data for field detection:
@@ -134,6 +139,7 @@ for ii_dir = 1:2
     solo(ii_dir).SI=information_per_spike;
     solo(ii_dir).fields=fields;
     solo(ii_dir).FE_struct_for_tamirs_code=FE;
+    solo(ii_dir).PSTH_for_2D_bin=PSTH_for_2D_bin;
 end
 
 end
