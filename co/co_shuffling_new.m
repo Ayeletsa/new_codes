@@ -56,15 +56,9 @@ for ii_cell = 3:length(behavior_struct_names)
             bsp_dis_m_vec = behavior_struct.co(ii_dir).bsp.dis_m(:);
             bsp_dis_m_vec = bsp_dis_m_vec(~isnan(bsp_dis_m_vec));
             
-                [ego_time_spent_in_bins, ~, ~, ego_firing_rate_mat(ii_shuffle,:), ~,~] ...
-                = fn_compute_generic_1D_tuning_new_smooth ...
-                (bsp_dis_m_vec,spikes_dis_m_vec, dis_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
-          
-            %  b.2.b. egocentric information =
-            fr_nan_ind = isnan(ego_firing_rate_mat(ii_shuffle,:));
-          %  information_per_spike_ego_vec(ii_shuffle) = spikes_information (  ego_firing_rate_mat(ii_shuffle,~fr_nan_ind), ego_time_spent_in_bins(~fr_nan_ind));
-             information_per_spike_ego_vec(ii_shuffle) = fn_compute_spatial_info (ego_time_spent_in_bins,ego_firing_rate_mat(ii_shuffle,:));
-            %  b.2.c. other egocentric parameters
+             [ego_firing_rate_mat(ii_shuffle,:),spike_density,time_spent] = computePSTH(bsp_dis_m_vec,frames_per_second,spikes_dis_m_vec,dis_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
+            [information_per_spike_ego_vec(ii_shuffle), ~] = computeSI(ego_firing_rate_mat(ii_shuffle,:),time_spent);
+              %  b.2.c. other egocentric parameters
             %%% when changin the code better to do everything here after
             %%% the loop!!!
             max_fr_vec(ii_shuffle) = nanmax(ego_firing_rate_mat(ii_shuffle,:));
@@ -111,8 +105,7 @@ for ii_cell = 3:length(behavior_struct_names)
 %             
         end
         
-        %%%%  TO DO!! I think the calculation of p value and significant test could
-        %%%% be here and not in the plot where it is now.
+        %%%%  TO DO!! 
         %%% also I don't like the word params for data, these are not
         %%% parameters, confusing!
         
