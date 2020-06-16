@@ -4,7 +4,14 @@ clear
 %% data:
 dir_data='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis\';
 dir_info=dir(dir_data);
-analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\PV_analysis\';
+analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\population\';
+inclusion_dir='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\inclusion_cells_struct\';
+inclusion_dir_info=dir(inclusion_dir);
+inclusion_names={inclusion_dir_info.name};
+inclusion_names([inclusion_dir_info.isdir])=[];
+cell_ind=regexp(inclusion_names{2},'cell_');
+
+cell_nums_inclusion=(cellfun(@(c) c(cell_ind+5:cell_ind+7),inclusion_names,'UniformOutput',false));
 %% load parameters
 population_vector_param_file_name='D:\Ayelet\2bat_proj\Analysis\new_code\params\population_vector_params.mat';
 load(population_vector_param_file_name);
@@ -30,14 +37,14 @@ for cell_i=1:length(file_names)
 %for cell_i=1:30
     % load data:
     load(fullfile(dir_data,file_names{cell_i}))
-    % go over conditions to run the analysis:
-    for dir_i=1:2
-        a=sum(~isnan(cell_co_solo_initial_analysis.solo(dir_i).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(dir_i).spikes.ts_usec(:)))>=min_n_spike;
-        b=cell_co_solo_initial_analysis.solo(dir_i).SI>SI_threshold;
-        dir_cond(dir_i)=a & b;
-    end
+    cell_num=cell_co_solo_initial_analysis.exp_data.cell_num;
+    %load cell's inclusion:
+    Match=cellfun(@(a) find(contains(a,num2str(cell_num))) , cell_nums_inclusion, 'UniformOutput', 0);
+    r=find(cellfun(@(c) ~isempty(c),Match));
+    load(fullfile(inclusion_dir,inclusion_names{r}))
     
-    if dir_cond(1) | dir_cond(2)
+    
+    if inclusion(1).place_cell | inclusion(2).place_cell
         %%  load data of both dirs to struct:
         %1. read cell data
         data=PV_get_cell_data(cell_co_solo_initial_analysis);
@@ -49,7 +56,7 @@ for cell_i=1:length(file_names)
         %% run over directions:
         for dir_i=1:2
             
-            if dir_cond(dir_i)
+            if inclusion(dir_i).place_cell
                 cell_dir_count=cell_dir_count+1;
                 prev_day=day;
                 day=cell_co_solo_initial_analysis.exp_data.day;
