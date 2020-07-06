@@ -20,8 +20,8 @@ parfor shuffle_i=1:num_shuffles
     end
     %compute tuning curve
     [~, ~, ~, r(shuffle_i,:), ~,~] ...
-        = fn_compute_generic_1D_tuning_new_smooth_new_again ...
-        (bsp_vec,spike_vec_shuf,dis_X_bins_vector_of_centers, time_spent_minimum_for_1D, frames_per_second, 0,0,0,old_smooth,smooth_window,smooth_type,smooth_tol)
+        = fn_compute_generic_1D_tuning_new_smooth ...
+        (bsp_vec,spike_vec_shuf,dis_X_bins_vector_of_centers, time_spent_minimum_for_1D, frames_per_second, 0,0,0);
     
     std_r=nanstd(r(shuffle_i,:));
     mean_r=nanmean(r(shuffle_i,:));
@@ -71,10 +71,10 @@ if ~isempty(sig_bins)
     interpolate_mid=interp1(dis_X_bins_vector_of_centers(non_nan_ind),mid_prctile_for_width(non_nan_ind),x_vec_interp);
     pos_bins_val=dis_X_bins_vector_of_centers(signif_field.pos_signif);
     [~, interp_ind_pos]=min(abs(pos_bins_val-x_vec_interp'));
-    [signif_field.width_pos_interp,signif_field.width_line_x_pos_interp,signif_field.width_line_y_pos_interp,signif_field.pos_rise_time_interp]=find_width(find(interpolate_r>interpolate_mid),interp_ind_pos,data,x_vec_interp,interpolate_mid);
+    [signif_field.width_pos_interp,signif_field.width_line_x_pos_interp,signif_field.width_line_y_pos_interp,signif_field.pos_rise_time_interp,line_of_tunind_width_ind_pos]=find_width(find(interpolate_r>interpolate_mid),interp_ind_pos,data,x_vec_interp,interpolate_mid);
     neg_bins_val=dis_X_bins_vector_of_centers(signif_field.neg_signif);
      [~, interp_ind_neg]=min(abs(neg_bins_val-x_vec_interp'));
-    [signif_field.width_neg_interp,signif_field.width_line_x_neg_interp,signif_field.width_line_y_neg_interp,signif_field.neg_rise_time_interp]=find_width(find(interpolate_r<interpolate_mid),interp_ind_neg,data,x_vec_interp,interpolate_mid);
+    [signif_field.width_neg_interp,signif_field.width_line_x_neg_interp,signif_field.width_line_y_neg_interp,signif_field.neg_rise_time_interp,line_of_tunind_width_ind_neg]=find_width(find(interpolate_r<interpolate_mid),interp_ind_neg,data,x_vec_interp,interpolate_mid);
 else
     signif_field.signif_based_on_extreme_bins=0;
 end
@@ -87,7 +87,17 @@ signif_field.zscore_data=zscore_shuffle(1,:);
 %% check if coumpound (both neg and pos)
 relevant_switch_times=[];
 width_compund_all=[];
+if ~distance
 if ~isempty(sig_bins)
+    %find if there are close width
+    %1. sum both pos and neg:
+    bin_size_interp=min(diff(x_vec_interp));
+    width_diff_time=diff(find(line_of_tunind_width_ind_pos+line_of_tunind_width_ind_neg)).*bin_size_interp;
+    if any(width_diff_time<min_dis_pos_neg & width_diff_time>bin_size_interp)
+       signif_field.compound=1;
+
+                
+    end
     if abs(min(signif_field.width_line_x_pos_interp(:))-max(signif_field.width_line_x_neg_interp(:)))<=min_dis_pos_neg | abs(max(signif_field.width_line_x_pos_interp(:))-min(signif_field.width_line_x_neg_interp(:)))<=min_dis_pos_neg
         signif_field.compound=1;
         %      compute switch time (time between last sig bin in pos to first in neg (or the other way)):
@@ -121,16 +131,18 @@ if ~isempty(sig_bins)
 else
     signif_field.compound=0;
 end
+end
 %% save more data:
 
 signif_field.shuffled_data=r(2:end,:);
 signif_field.cv=cv(1);
 %%
-    function [width,width_line_x_pos,width_line_y_pos,rise_time]=find_width(line_of_reference,ind_signif,data,x_bins,y_vec)
+    function [width,width_line_x_pos,width_line_y_pos,rise_time,line_of_tunind_width_ind]=find_width(line_of_reference,ind_signif,data,x_bins,y_vec)
         length_data=length(data);
         non_nan_ind=find(~isnan(data));
         bin_size=mean(diff(x_bins));
         [ind_length,start_ind,end_ind]=find_length_of_consecutive_ind(line_of_reference,length_data);
+        line_of_tunind_width_ind=zeros(1,length_data);
         if ~isempty(ind_length)
             for area_i=1:length(ind_length)
                 %find if there is signif bin iind_signifn the area
@@ -141,6 +153,7 @@ signif_field.cv=cv(1);
                     width_line_x_pos(area_i,:)=[x_bins(start_ind(area_i)) x_bins(end_ind(area_i))];
                     width_line_y_pos(area_i,:)=[y_vec(start_ind(area_i)) y_vec(end_ind(area_i))];
                     rise_time(area_i)=[x_bins(ind_signif(signif_bin_ind(1)))-x_bins(start_ind(area_i))];
+                    line_of_tunind_width_ind(start_ind(area_i):end_ind(area_i))=area_i;
                 else
                     width(area_i)=nan;
                     width_line_x_pos(area_i,:)=[nan,nan];
