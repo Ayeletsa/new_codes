@@ -48,16 +48,24 @@ for ego_bin_i=1:length(ego_bin_start)
         % Lower bound - co permuted (shuffle) vs. solo (all)
         %=====================================================
         % a. solo vs co
-        co_allo_cell_mat=PSTH_solo_shuffle_ego_bins(:,:,shuffle_i,ego_bin_i);
-        co_allo_cell_mat=co_allo_cell_mat(randperm(size(co_allo_cell_mat,1)),randperm(size(co_allo_cell_mat,2)));
+        co_allo_cell_mat_not_shuffled=PSTH_co_ego_bins(:,:,ego_bin_i);
         solo_allo_cell_mat=solo_PSTH;
+        %co_allo_cell_mat=co_allo_cell_mat(randperm(size(co_allo_cell_mat_not_shuffled,1)),randperm(size(co_allo_cell_mat_not_shuffled,2)));
+        
+        %permute positions (rows)
+        co_allo_cell_mat=co_allo_cell_mat_not_shuffled(randperm(size(co_allo_cell_mat_not_shuffled,1)),:);
         [corrs.PV.co.lower_bound.mat(:,ego_bin_i,shuffle_i), corrs.PV.co.lower_bound.tuning(ego_bin_i,shuffle_i)]=corr_mat_cells_by_pos(co_allo_cell_mat,solo_allo_cell_mat,2);
+        
+        co_allo_cell_mat=co_allo_cell_mat./max(co_allo_cell_mat,[],2);
+        solo_allo_cell_mat=solo_allo_cell_mat./max(solo_allo_cell_mat,2);
+        [corrs.norm_PV.co.lower_bound.mat(:,ego_bin_i,shuffle_i), corrs.norm_PV.co.lower_bound.tuning(ego_bin_i,shuffle_i)]=corr_mat_cells_by_pos(co_allo_cell_mat,solo_allo_cell_mat,2);
+       
+        %permute cells (columns)
+        co_allo_cell_mat=co_allo_cell_mat_not_shuffled(:,randperm(size(co_allo_cell_mat_not_shuffled,2)));
+        solo_allo_cell_mat=solo_PSTH;
         [corrs.cells.co.lower_bound.mat(:,ego_bin_i,shuffle_i), corrs.cells.co.lower_bound.tuning(ego_bin_i,shuffle_i)]=corr_mat_cells_by_pos(co_allo_cell_mat,solo_allo_cell_mat,1);
         
         % a. solo vs co
-         co_allo_cell_mat=co_allo_cell_mat./max(co_allo_cell_mat,[],2);
-        solo_allo_cell_mat=solo_allo_cell_mat./max(solo_allo_cell_mat,2);
-        [corrs.norm_PV.co.lower_bound.mat(:,ego_bin_i,shuffle_i), corrs.norm_PV.co.lower_bound.tuning(ego_bin_i,shuffle_i)]=corr_mat_cells_by_pos(co_allo_cell_mat,solo_allo_cell_mat,2);
        
        
 %         %c. other dir solo vs. co - norm to max
