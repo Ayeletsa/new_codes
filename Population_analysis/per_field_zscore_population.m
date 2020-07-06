@@ -1,5 +1,7 @@
 %% Population per field z score
 clear
+%general params:
+sort_by_max=0;
 
 %% data:
 dir_data='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis\';
@@ -92,7 +94,7 @@ for cell_i=1:length(file_names)
             
           
 
-          for field_i=1:length(cell_co_solo_initial_analysis.co(dir_i).per_field_href)
+          for field_i=1:length(solo_field_data)
               % run only on per fields that obey conditions:
               r=per_field_data(field_i).tuning_dis_x_fr_per_field;
               [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
@@ -171,39 +173,39 @@ end
 
 %% plot
 figure('units','normalized','outerposition',[0 0 1 1])
-mat_size=[0.1 0.1];
-tuning_size=[0.1 0.03];
+mat_size=[0.08 0.08];
+tuning_size=[0.05 0.06];
 
-hor_dist=0.15;
-x_pos(1)=0.1;
+hor_dist=0.095;
+x_pos(1)=0.03;
 x_pos(2)=x_pos(1)+hor_dist;
 x_pos(3)=x_pos(2)+hor_dist;
 x_pos(4)=x_pos(3)+hor_dist;
 x_pos(5)=x_pos(4)+hor_dist;
 x_pos(6)=x_pos(5)+hor_dist;
+x_pos(7)=x_pos(6)+hor_dist;
+x_pos(8)=x_pos(7)+hor_dist;
+x_pos(9)=x_pos(8)+hor_dist;
+x_pos(10)=x_pos(9)+hor_dist;
 
 ver_dist=0.2;
-y_pos_mat(1)=0.8;
+y_pos_mat(1)=0.83;
 y_pos_mat(2)=y_pos_mat(1)-ver_dist;
 y_pos_mat(3)=y_pos_mat(2)-ver_dist;
 y_pos_mat(4)=y_pos_mat(3)-ver_dist;
+y_pos_mat(5)=y_pos_mat(4)-ver_dist;
 %%
+ylim_tuning=[0 15];
+y_lim_zscore=[-1 1];
+% tuning:
+ylimits=ylim_tuning;
 ix=1;
 iy=1;
 pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning;
 title_str='tuning of all valid fields';
-sort_by_max=0;
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
-
-ix=2;
-iy=1;
-pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
-pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
-data=all_per_field_valid_tuning_zscore;
-title_str='zscore tuning of all valid fields';
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 
 ix=1;
 iy=2;
@@ -211,15 +213,8 @@ pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning(~id_per_field_non_signif,:);
 title_str='tuning of signif fields';
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 
-ix=2;
-iy=2;
-pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
-pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
-data=all_per_field_valid_tuning_zscore(~id_per_field_non_signif,:);
-title_str='zscore tuning of signif fields';
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
 
 ix=1;
 iy=3;
@@ -227,15 +222,8 @@ pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning(id_per_field_pos_tuning,:);
 title_str='tuning of pos signif fields';
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 
-ix=2;
-iy=3;
-pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
-pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
-data=all_per_field_valid_tuning_zscore(id_per_field_pos_tuning,:);
-title_str='zscore tuning of pos signif fields';
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
 
 ix=1;
 iy=4;
@@ -243,8 +231,45 @@ pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning(id_per_field_neg_tuning,:);
 title_str='tuning of neg signif fields';
-sort_by_max=0;
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+
+id_compound=intersect(find(id_per_field_neg_tuning),find(id_per_field_pos_tuning));
+ix=1;
+iy=5;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning(id_compound,:);
+title_str='tuning of compound fields';
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+
+%zcore
+ylimits=y_lim_zscore;
+ix=2;
+iy=1;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning_zscore;
+title_str='zscore tuning of all valid fields';
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+ix=2;
+iy=2;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning_zscore(~id_per_field_non_signif,:);
+title_str='zscore tuning of signif fields';
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+ix=2;
+iy=3;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning_zscore(id_per_field_pos_tuning,:);
+title_str='zscore tuning of pos signif fields';
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
 
 ix=2;
 iy=4;
@@ -252,53 +277,122 @@ pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning_zscore(id_per_field_neg_tuning,:);
 title_str='zscore tuning of neg signif fields';
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+
+ix=2;
+iy=5;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning_zscore(id_compound,:);
+title_str='zscore tuning of compound fields';
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
 %% for sub groups of solo fields
 for i=1:4
 id_cells=field_group{i};
+%tuning:
+ylimits=ylim_tuning;
 
-ix=i+2;
+ix=2*i+1;
+iy=1;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning(id_cells,:);
+title_str=sprintf('tuning all group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+ix=2*i+1;
+iy=2;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning(intersect(find(~id_per_field_non_signif),id_cells),:);
+title_str=sprintf('tuning signif group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+
+ix=2*i+1;
+iy=3;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning(intersect(find(id_per_field_pos_tuning),id_cells),:);
+title_str=sprintf('tuning pos group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+
+ix=2*i+1;
+iy=4;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning(intersect(find(id_per_field_neg_tuning),id_cells),:);
+title_str=sprintf('tuning neg group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+
+id_compound=intersect(find(id_per_field_neg_tuning),find(id_per_field_pos_tuning));
+ix=2*i+1;
+iy=5;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+data=all_per_field_valid_tuning(intersect(find(id_compound),id_cells),:);
+title_str=sprintf('tuning compound group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+%zscore
+ylimits=y_lim_zscore;
+
+ix=2*i+2;
 iy=1;
 pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning_zscore(id_cells,:);
-title_str=sprintf('zscore tuning of all valid fields group %d',i);
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+title_str=sprintf('zscore all group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 
-ix=i+2;
+ix=2*i+2;
 iy=2;
 pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning_zscore(intersect(find(~id_per_field_non_signif),id_cells),:);
-title_str=sprintf('zscore tuning of signif fields group %d',i);
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+title_str=sprintf('zscore signif group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 
 
-ix=i+2;
+ix=2*i+2;
 iy=3;
 pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning_zscore(intersect(find(id_per_field_pos_tuning),id_cells),:);
-title_str=sprintf('zscore tuning of pos signif fields group %d',i);
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+title_str=sprintf('zscore pos group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 
 
-ix=i+2;
+ix=2*i+2;
 iy=4;
 pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
 pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
 data=all_per_field_valid_tuning_zscore(intersect(find(id_per_field_neg_tuning),id_cells),:);
-title_str=sprintf('zscore tuning of neg signif fields group %d',i);
-plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+title_str=sprintf('zscore neg group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
+ix=2*i+2;
+iy=5;
+pos_ax_mat=[x_pos(ix),y_pos_mat(iy),mat_size];
+pos_ax_tuning=[x_pos(ix),y_pos_mat(iy)+mat_size(2),tuning_size];
+id_compound=intersect(find(id_per_field_neg_tuning),find(id_per_field_pos_tuning));
+data=all_per_field_valid_tuning_zscore(intersect(find(id_compound),id_cells),:);
+title_str=sprintf('zscore compound group %d',i);
+plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
+
 end
 
 %% save
-fig_file_name=['D:\Ayelet\2bat_proj\Analysis\new_code\figures\population\per_field_zscore.jpg'];
+fig_file_name=['D:\Ayelet\2bat_proj\Analysis\new_code\figures\population\per_field_zscore_color_bar_sort_by_',num2str(sort_by_max),'.jpg'];
 saveas(gcf,fig_file_name)
 
 
 %%
-function plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max)
+function plot2dmats(pos_ax_mat,pos_ax_tuning, data, dis_per_field_bin_vec_of_center,title_str,sort_by_max,ylimits)
 normalize_to_other_max=[];
 %[xlimits, ylimits] = fn_plot_2D_field (data, dis_per_field_X_bins_vector,dis_per_field_bin_vec_of_center, cells_bin,cells_bin_vector_of_centers,normalize_to_other_max);
 axes('position',pos_ax_mat)
@@ -313,11 +407,14 @@ data=data(idd,:);
 imagesc(data)
 xlabel('Inter-bat distance (m)')
 set(gca,'xtick',0:10:length(dis_per_field_bin_vec_of_center), 'xticklabel',[-40 -20 20 40])
-ylabel('Fields')
+%ylabel('Fields')
 colormap(jet)
+colorbar('location','eastoutside')
 
 axes('position',pos_ax_tuning)
 plot(dis_per_field_bin_vec_of_center,nanmean(data))
 title(title_str)
-
+ylim(ylimits)
+xlim([-40 40])
+set(gca,'xtick',[])
 end
