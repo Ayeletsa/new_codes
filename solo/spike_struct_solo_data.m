@@ -6,6 +6,9 @@ us_factor=1e6;
 %load spikes:
 spikes_ts = cell_struct.spikes.spikes_ts_usec;
 
+%find spike ts that are not during bsp nan:
+spike_pos=interp1(bsp_proc_data(tag_i).ts,bsp_proc_data(tag_i).pos(:,1),spikes_ts);
+spikes_ts(isnan(spike_pos))=[];
 %% loop for 2 directions
 
 for ii_dir = 1:2
