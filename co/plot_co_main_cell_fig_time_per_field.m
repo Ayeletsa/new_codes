@@ -13,6 +13,8 @@ min_n_spike=100;
 
 files = dir(cell_co_solo_initial_analysis_struct_folder);
 behavior_struct_names = {files.name};
+is_dir=[files.isdir];
+behavior_struct_names=behavior_struct_names(~is_dir);
 files = dir(co_shuffle_folder_name);
 co_shuffle_struct_names = {files.name};
 
@@ -37,7 +39,7 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell = 34:length(behavior_struct_names)
+for ii_cell = 23:length(behavior_struct_names)
     ii_cell
     signif=0;
     %% load data
@@ -345,7 +347,7 @@ for ii_cell = 34:length(behavior_struct_names)
                     % plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos(1,:),behavior_struct.co(ii_dir).firing_rate.solo_x_pos(2,:),'color',solo_colors{ii_dir},'LineWidth',2);
                     plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,allo_X_bins_vector_of_centers_2D ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
                     max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D) );
-                    if max_x~=0
+                    if max_x~=0 & ~isnan(max_x)
                         set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                     end
                     str = sprintf('Hz');
