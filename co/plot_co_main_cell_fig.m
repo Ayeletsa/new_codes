@@ -42,6 +42,7 @@ fsize = 14;
 %% plot for each cell
 for ii_cell =3:length(behavior_struct_names)
     ii_cell
+    try
     signif=0;
     %% load data
     
@@ -249,8 +250,8 @@ for ii_cell =3:length(behavior_struct_names)
                 invhibited_bins(invhibited_ind) =  -behavior_struct.co(ii_dir).solo_co_comparison.diff_mean_firing_rate(invhibited_ind);
                 excited_bins = zeros(1,n_bins);
                 excited_bins(~invhibited_ind) =  -behavior_struct.co(ii_dir).solo_co_comparison.diff_mean_firing_rate(~invhibited_ind);
-                barh(bins_centers,invhibited_bins,'BarWidth',1,'facecolor',[0,.8,0])
-                barh(bins_centers,excited_bins,'BarWidth',1,'facecolor',[1,0,0])
+                barh(bins_centers,invhibited_bins,'BarWidth',1,'facecolor',[1,0,0])
+                barh(bins_centers,excited_bins,'BarWidth',1,'facecolor',[0,0.8,0])
                 x_min_max = [min(-behavior_struct.co(ii_dir).solo_co_comparison.diff_mean_firing_rate) max(-behavior_struct.co(ii_dir).solo_co_comparison.diff_mean_firing_rate)];
                 if x_min_max(2) == 0
                     x_min_max(2) = 1;
@@ -262,7 +263,7 @@ for ii_cell =3:length(behavior_struct_names)
                 sig_p = find(behavior_struct.co(ii_dir).solo_co_comparison.p_diff_firing_rate <=adjusted_alpha);
                 scatter(ones(1,length(sig_p))*x_limits(2),bins_centers(sig_p),[],'k','*')
                 box off
-                str = sprintf('CO-Solo\nHz');
+                str = sprintf('Solo-CO\nHz');
                 xlabel(str,'fontsize',fsize*.7)
                 str = sprintf('n Bins = %d\nAlpha = .05\nadj. Alpha = %.4f',n_bins,adjusted_alpha);
                 [x,y]=ds2nfu([x_limits(2) x_limits(2)],[tunnel_limits(2) tunnel_limits(2)]*1.2);
@@ -547,7 +548,7 @@ for ii_cell =3:length(behavior_struct_names)
                 axes('position',axes_pos)
                 h=heatmap(cell_co_solo_initial_analysis.co(ii_dir).per_field_tunings_corrs);
                 caxis([-1, 1]);
-                freezeColors
+              %  freezeColors
                 %hold off;
 %                 % Get the table in string form.
 %                 TString = evalc('disp(T)');
@@ -595,7 +596,11 @@ for ii_cell =3:length(behavior_struct_names)
                 
                 % egocentric information
                 axes(co_ax{15})
+                if signif_by_SI==1
                 param_name = ('information_per_spike_ego');
+                else
+                    param_name = ('range');
+                end
                 hold on
                 counts = co_shuffle_struct(ii_dir).shuffled_data.params.(param_name).histogram{1, 1};
                 if max(counts) > 0
@@ -613,7 +618,7 @@ for ii_cell =3:length(behavior_struct_names)
                     set(gca, 'color',sig_bkg_color)
                 end
                 if ~isnan(p_value)
-                    str = sprintf('EGO information = %.3f\n(p = %.4f)\n',param_value,p_value);
+                    str = sprintf('%s = %.3f\n(p = %.4f)\n',param_name,param_value,p_value);
                     title(str,'fontsize',10)
                 end
                 
@@ -673,7 +678,7 @@ for ii_cell =3:length(behavior_struct_names)
             if ~exist(co_fig_folder_name)
                 mkdir(co_fig_folder_name)
             end
-            fig_name=fullfile(co_fig_folder_name,['cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
+            fig_name=fullfile(co_fig_folder_name,['cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_signif_by_SI_',num2str(signif_by_SI),'.png']);
             saveas(gcf,fig_name)
             
         %% save fig for n co:
@@ -703,7 +708,8 @@ for ii_cell =3:length(behavior_struct_names)
     else
         continue
     end
-
+    catch
+    end
 end
 close(gcf)
 
