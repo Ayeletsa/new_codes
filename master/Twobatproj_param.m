@@ -15,6 +15,8 @@ params.dirs.behave_co_struct_folder=[main_analysis_dir,'\analysis_structs\behavi
 params.dirs.behave_solo_struct_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\day_structs\solo_structs\'];
 params.dirs.ball_position_folder=[main_analysis_dir,'\analysis_structs\behavioral_modes\ball_pos\'];
 params.dirs.cell_co_solo_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\co_solo_initial_analysis\'];
+params.dirs.solo_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\solo_initial\'];
+params.dirs.co_initial_analysis_struct_folder=[main_analysis_dir,'\analysis_structs\co_initial\'];
 %params.dirs.cell_co_solo_initial_analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis_k_1.5_th_1\';
 params.dirs.co_shuffle_folder_name = [main_analysis_dir,'\analysis_structs\co_shuffling_struct'];
 params.dirs.solo_shuffle_folder_name=[main_analysis_dir,'\analysis_structs\solo_shuffling_struct'];
@@ -174,7 +176,7 @@ params.co.time_spent_minimum_for_1D_bins=0.2;
 params.co.frames_per_second=params.behav.frame_per_second;
 params.co.alpha_val=5;
 params.co.time_before_after_co_for_co_window=params.behav.time_before_after_co_for_co_window; %(seconds) for defining the window around the co
-
+params.co.signif_by_SI=0; %flag on signif ego cell by zscore of SI
 % a. Egocentric time bins: 
 params.co.ker_SD=params.fields.ker_SD;
 params.co.time_before_after_co=params.behav.time_before_after_co;
@@ -210,7 +212,9 @@ params.co.time_spent_minimum_for_2D_bins=0.2;
 params.co.sigma_a=1.5;
 params.co.hsize=5*round(params.co.sigma_a)+1;
 params.co.legalize_by_neighbor_bins_flag=1;
-
+% for computing reduction in velocity:
+params.co.long_dis_thresh=20;
+params.co.short_dis_thresh=5;
 %save
 co_params=params.co;
 param_file_name=fullfile(param_folder,'co_params.mat');
@@ -240,8 +244,8 @@ params.per_field.dis_per_field_bin_vec_of_center=params.per_field.dis_per_field_
 params.per_field.n_bins=params.per_field.time_per_field_X_bins_vector;
 
 %shuffle:
-params.per_field.alpha_val=5;
-params.per_field.num_shuffles_per_field=1000;
+params.per_field.alpha_val=1;
+params.per_field.num_shuffles_per_field=10000;
 %width:
 params.per_field.width_at_heigth=50;%width of per field
 %smooth:
@@ -355,7 +359,11 @@ save(param_file_name, '-struct', 'co_population_params')
 
 %% population vector params:
 params.population_vector.n_shuffles=100;%temp
-
+% controls for behavior:
+%data in y:
+params.population_vector.run_only_on_intersent_data=0;
+params.population_vector.vel_reduction_thresh=0.9;
+params.population_vector.run_only_fast_co=1;
 %cell selection:
 params.population_vector.SI_threshold=params.per_field.SI_threshold;
 params.population_vector.min_n_spike=params.per_field.min_n_spike;
@@ -369,8 +377,7 @@ params.population_vector.ego_bin_start=params.population_vector.ego_range(1):par
 params.population_vector.ego_bin_end=params.population_vector.ego_range(1)+params.population_vector.window:params.population_vector.step:params.population_vector.ego_range(2);
 params.population_vector.ego_bin_center=[params.population_vector.ego_bin_start+params.population_vector.ego_bin_end]./2;
 params.population_vector.ego_bin_dis=params.population_vector.ego_range(1):params.population_vector.step:params.population_vector.ego_range(2);
-%data in y:
-params.population_vector.run_only_on_intersent_data=0;
+
 %params.population_vector.full_data=0;
 
 %allocentric tuning params:
