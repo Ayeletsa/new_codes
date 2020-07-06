@@ -3,13 +3,27 @@
 close all
 clear
 clc
-cells_num_dir=[267 2;257 2;261 2; 277 2;238 1; 296 2];
-relevant_field{1}=[1,2,3];
-relevant_field{2}=[1,2];
-relevant_field{3}=[1,2,3];
-relevant_field{4}=[1,2];
-relevant_field{5}=[1,2];
-relevant_field{6}=[1,2,3];
+load('D:\Ayelet\2bat_proj\Analysis\new_code\params\co_params.mat')
+load('D:\Ayelet\2bat_proj\Analysis\new_code\params\per_field_params.mat')
+
+
+% cells_num_dir=[267 2;257 2;261 2; 277 2;238 1; 296 2];
+% relevant_field{1}=[1,2,3];
+% relevant_field{2}=[1,2];
+% relevant_field{3}=[1,2,3];
+% relevant_field{4}=[1,2];
+% relevant_field{5}=[1,2];
+% relevant_field{6}=[1,2,3];
+cells_num_dir=[525,2;687,1;687,2;725,2;725,1;238,1;258,1;290,1];
+relevant_field{1}=[1,2];
+relevant_field{2}=[2,3,4];
+relevant_field{3}=[2,3,4];
+relevant_field{4}=[2,3,4];
+relevant_field{5}=[2,3,4];
+relevant_field{6}=[1,2];
+relevant_field{7}=[2,3,4];
+relevant_field{8}=[1,2,3,4];
+
 
 %% structs' parameters
 
@@ -84,7 +98,7 @@ for ii_cell = 1:length(cells_num_dir)
         co_shuffle_struct=load(file_name);
         co_shuffle_struct=co_shuffle_struct.shuffling_struct;
         
-        dis_before_after_co = behavior_struct.co(1).params.dis_before_after_co;
+        dis_before_after_co = 40;
         %% title
         axes('units','normalized','Position',[0.1 0.1 0.7 0.7]);
         text(0.23,0.95,sprintf('Cell %d',cell_num),'fontsize',fsize*1.3,'fontweight','bold')
@@ -132,13 +146,14 @@ for ii_cell = 1:length(cells_num_dir)
         else
       normalize_to_other_max=[];
         end
-        field_density_mat_X_Y=behavior_struct.co(ii_dir).firing_rate.field_density_smoothed_XY_with_NaN{bin_dis_i,bin_allo_i};
-        X_bins_vector=behavior_struct.co(ii_dir).firing_rate.dis_X_bins_vector{bin_dis_i,bin_allo_i};
-        X_bins_vector_of_centers=behavior_struct.co(ii_dir).firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i};
-        Y_bins_vector=behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector{bin_dis_i,bin_allo_i};
-        Y_bins_vector_of_centers=behavior_struct.co(ii_dir).firing_rate.allo_X_bins_vector_of_centers{bin_dis_i,bin_allo_i};
-        allo_bin_size=behavior_struct.co(ii_dir).firing_rate.allo_bin_size{bin_dis_i,bin_allo_i};
-        dis_bin_size=behavior_struct.co(ii_dir).firing_rate.dis_bin_size{bin_dis_i,bin_allo_i};
+         normalize_to_other_max=[];
+        field_density_mat_X_Y=behavior_struct.co(ii_dir).firing_rate.field_density_smoothed_XY_with_NaN;
+        X_bins_vector=dis_X_bins_vector_2D;
+        X_bins_vector_of_centers=dis_X_bins_vector_of_centers_2D;
+        Y_bins_vector=allo_X_bins_vector_2D;
+        Y_bins_vector_of_centers=allo_X_bins_vector_of_centers_2D;
+        allo_bin_size=allo_X_bin_size_2D;
+        dis_bin_size=dis_X_bin_size_2D;
         
         [xlimits, ylimits] = fn_plot_2D_field (field_density_mat_X_Y, X_bins_vector, X_bins_vector_of_centers,Y_bins_vector, Y_bins_vector_of_centers,normalize_to_other_max);
         set(gca,'xlim',xlimits,...
@@ -200,19 +215,19 @@ for ii_cell = 1:length(cells_num_dir)
                 count=count+1;
                 
                 axes('units','normalized','Position',[x_per_field y_pos_vec(count) 0.18 0.05]);
-                if sum(~isnan(behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i}))~=0
-                    bins_center=behavior_struct.co(ii_dir).firing_rate.dis_X_bins_vector_of_centers{bin_dis_i,bin_allo_i};
-                    shuf_data=behavior_struct.co(ii_dir).firing_rate.signif_field{1, fr_i}.shuffled_data;
-                    r=behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i};
+                if sum(~isnan(behavior_struct.co(ii_dir).per_field_href(fr_i).tuning_dis_x_fr_per_field))~=0
+                    bins_center=dis_per_field_bin_vec_of_center;
+                    shuf_data=behavior_struct.co(ii_dir).per_field_href(fr_i).dis_signif_field.shuffled_data;
+                    r=behavior_struct.co(ii_dir).per_field_href(fr_i).tuning_dis_x_fr_per_field ;
                     plot(bins_center,shuf_data,'color',spike_colors{3},'LineWidth',lwidth); hold on;
                     plot(bins_center ,r,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                    
-                    if behavior_struct.co(ii_dir).firing_rate.signif_field{1, fr_i}.signif_based_on_extreme_bins==1
-                        neg_signif=behavior_struct.co(ii_dir).firing_rate.signif_field{1, fr_i}.neg_signif;
+                    if behavior_struct.co(ii_dir).per_field_href(fr_i).dis_signif_field.signif_based_on_extreme_bins==1
+                        neg_signif=behavior_struct.co(ii_dir).per_field_href(fr_i).dis_signif_field.neg_signif;
                         plot(bins_center(neg_signif),r(neg_signif)+1,'ro')
-                        pos_signif=behavior_struct.co(ii_dir).firing_rate.signif_field{1, fr_i}.pos_signif;
+                        pos_signif=behavior_struct.co(ii_dir).per_field_href(fr_i).dis_signif_field.pos_signif;
                         plot(bins_center(pos_signif),r(pos_signif)+1,'go')
                     end
+                   
                     max_y = round(max(max([r;shuf_data]))*1.1*10) / 10 +1;
                     if max_y < 1
                         max_y = 1;
@@ -226,7 +241,7 @@ for ii_cell = 1:length(cells_num_dir)
                         set(gca,'xlim',x_limits,'XTick',[],'ylim',[0 max_y],'Ytick',max_y,'color',FR_colors{1});
                         
                     end
-                    r=behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i};
+                   % r=behavior_struct.co(ii_dir).firing_rate.dis_x_fr_per_field{1, fr_i};
                     
                     box off
                 end
@@ -247,7 +262,7 @@ for ii_cell = 1:length(cells_num_dir)
     if ~exist(dir_name)
         mkdir(dir_name)
     end
-    fig_name=fullfile(dir_name,['egocentric_cell_',num2str(cell_num)]);
+    fig_name=fullfile(dir_name,['egocentric_cell_',num2str(cell_num),'_dir_',num2str(ii_dir)]);
     print(gcf, fig_name, '-dpdf',  '-painters');
     fig_name_fig=[fig_name,'.fig'];
     saveas(gcf,fig_name_fig)
