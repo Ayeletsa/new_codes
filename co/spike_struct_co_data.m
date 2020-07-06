@@ -10,7 +10,9 @@ prm.fields.min_time_spent_per_bin=0.2;
 %
 %% load spikes:
 spikes_ts = cell_struct.spikes.spikes_ts_usec;
-
+%find spike ts that are not during bsp nan:
+spike_pos=interp1(bsp_proc_data(tag_i).ts,bsp_proc_data(tag_i).pos(:,1),spikes_ts);
+spikes_ts(isnan(spike_pos))=[];
 %% loop for the 2 directions
 
 for ii_dir = 1:2
@@ -58,6 +60,7 @@ for ii_dir = 1:2
         % b. find spikes values
         spikes_ts_usec{ii_co} = spikes_ts(spikes_ind);
         spikes_time_to_co{ii_co} = spikes_relative_times(spikes_ind);
+        
         spikes_dis_m_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_dis_m_at_co{ii_co},spikes_ts_usec{ii_co});
         spikes_x_pos_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_x_pos_at_co{ii_co},spikes_ts_usec{ii_co});
         spikes_y_pos_at_co{ii_co} = interp1(bsp_ts_usec{ii_co},bsp_y_pos_at_co{ii_co},spikes_ts_usec{ii_co});
@@ -137,16 +140,20 @@ for ii_dir = 1:2
     % b. n spikes in each direction
     info.n_spikes = sum(sum(isfinite(spikes.x_pos)));
     
+    % calculate velocity reduction in the center compared to median
+    info.vel=find_vel_prop_reduction(bsp_dis_m_at_co,bsp_vel_xy_at_co,long_dis_thresh,short_dis_thresh);
+    
     co(ii_dir).info = info;
-    
-    
     %% calculate tuning curves
     
     % a. time to co
     bsp_vec = bsp.time_to_co(isfinite(bsp.time_to_co));
     spikes_vec = spikes.time_to_co(isfinite(spikes.time_to_co));
+    [time_spent, ~, ~, PSTH, ~,~] ...
+            = fn_compute_generic_1D_tuning_new_smooth ...
+            (bsp_vec,spikes_vec,time_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
     
-    [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,time_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
+    %[PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,time_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
 
     
     firing_rate.time_to_co = [PSTH;time_X_bins_vector_of_centers];
@@ -154,8 +161,11 @@ for ii_dir = 1:2
     % b. relative distance
     bsp_vec = bsp.dis_m(isfinite(bsp.dis_m));
     spikes_vec = spikes.dis_m(isfinite(spikes.dis_m));
-    
-    [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,dis_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
+    [time_spent, ~, ~, PSTH, ~,~] ...
+            = fn_compute_generic_1D_tuning_new_smooth ...
+            (bsp_vec,spikes_vec,dis_X_bins_vector_of_centers, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+   
+    %[PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,dis_X_bins_vector,time_spent_minimum_for_1D_bins,ker_SD);
     [SI_bits_spike, SI_bits_sec] = computeSI(PSTH,time_spent);
     firing_rate.dis_m = [PSTH;dis_X_bins_vector_of_centers];
     firing_rate.dis_m_SI=SI_bits_spike;
@@ -208,8 +218,10 @@ for ii_dir = 1:2
     %ego (dis) for the 2D plot
     bsp_vec = bsp.dis_m(isfinite(bsp.dis_m));
     spikes_vec = spikes.dis_m(isfinite(spikes.dis_m));
-       [PSTH,spike_density,time_spent] = computePSTH(bsp_vec,frames_per_second,spikes_vec,dis_X_bins_vector_2D,time_spent_minimum_for_1D_bins,ker_SD);
- 
+       [~, ~, ~, PSTH, ~,~] ...
+            = fn_compute_generic_1D_tuning_new_smooth ...
+            (bsp_vec,spikes_vec,dis_X_bins_vector_of_centers_2D, time_spent_minimum_for_1D_bins, frames_per_second, 0,0,0);
+   
     
     firing_rate.dis_x_pos_fr_for_2D = PSTH;
     
@@ -295,14 +307,14 @@ for ii_dir = 1:2
             solo_spikes_x_pos = solo_data(ii_dir).spikes.x_pos;
             co_bsp_x_pos=bsp.x_pos;
             co_spikes_x_pos=spikes.x_pos;
-            solo_co_comparison=allo_co_solo_comparison(x_pos_bin_limits,sig_bins_width,solo_bsp_x_pos,solo_spikes_x_pos,co_bsp_x_pos,co_spikes_x_pos,frames_per_second,min_flights_per_bin);
+            solo_co_comparison=allo_co_solo_comparison(x_pos_bin_limits,sig_bins_width*2,solo_bsp_x_pos,solo_spikes_x_pos,co_bsp_x_pos,co_spikes_x_pos,frames_per_second,min_flights_per_bin);
             inter_field(inter_field_i).solo_co_comparison=solo_co_comparison;
             % compute SI and firing rate per inter field
              pos = solo_data(ii_dir).bsp.x_pos(solo_data(ii_dir).bsp.x_pos>x_pos_bin_limits(1) & solo_data(ii_dir).bsp.x_pos<x_pos_bin_limits(2)) ;
              spikes_pos=solo_data(ii_dir).spikes.x_pos(solo_data(ii_dir).spikes.x_pos>x_pos_bin_limits(1) & solo_data(ii_dir).spikes.x_pos<x_pos_bin_limits(2)) ;
              pos_fs=frames_per_second;
              bin_edges=prm.fields.bin_edges;
-             min_time_spent_per_bin=prm.fields.min_time_spent_per_meter;
+             min_time_spent_per_bin=prm.fields.min_time_spent_per_bin;
              ker_SD=prm.fields.ker_SD;
             [PSTH,spike_density,time_spent] = computePSTH(pos,pos_fs,spikes_pos,bin_edges,min_time_spent_per_bin,ker_SD);
             [SI_bits_spike, SI_bits_sec] = computeSI(PSTH,time_spent);
