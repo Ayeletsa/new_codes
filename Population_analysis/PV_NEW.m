@@ -19,7 +19,7 @@ pop_vec_folder='D:\Ayelet\2bat_proj\Analysis\new_code\figures\pop_vec\';
 
 prm.fields.bin_size=allo_X_bin_size;
 prm.fields.bin_limits=allo_X_bins_vector;
-prm.fields.min_time_spent_per_meter=allo_time_spent_minimum_for_1D_bins;
+prm.fields.min_time_spent_per_bin=allo_time_spent_minimum_for_1D_bins;
 prm.fields.ker_SD=ker_SD;
 prm.fields.pos_fs=frames_per_second;
 %% initialize:
@@ -52,9 +52,16 @@ for cell_i=1:length(file_names)
         if run_only_on_intersent_data==1
             data=PV_get_y_intersect_data(data,allo_X_bins_vector,allo_X_bins_vector_of_centers);
         end
+        % 3. run only on "fast" cross overs
+        if run_only_fast_co==1
+            data=PV_get_y_intersect_data_velocity(data,vel_reduction_thresh);
+        end
         
         %% run over directions:
         for dir_i=1:2
+            if isempty(data(dir_i).co.bsp.flight_ts  )
+                continue
+            end
             
             if inclusion(dir_i).place_cell
                 cell_dir_count=cell_dir_count+1;
@@ -77,7 +84,7 @@ for cell_i=1:length(file_names)
                 %% comupte tuning curves for co data bin by bin of CO:
                 n_co=size(data(dir_i).co.bsp.flight_ts,1);
                 for bin_i=1:length(ego_bin_start)
-                    bin_i
+                    
                     
                     %1. compute PSTH of CO data per egocentric bin:
                     %-----------------------------------------------
@@ -96,7 +103,7 @@ for cell_i=1:length(file_names)
                     %the same range as in co:
                     
                     parfor shuffle_i=1:n_shuffles
-                        shuffle_i
+                        
                         % a. find data for shuffle:
                         solo_data=data(dir_i).solo;
                         co_data=data(dir_i).co;
@@ -133,7 +140,7 @@ PV_data.solo_PSTH=PSTH_solo;
 PV_data.PSTH_solo_shuffle_ego_bins=PSTH_solo_shuffle_ego_bins;
 PV_data.solo_PSTH_other_dir=PSTH_solo_other_dir;
 
-file_name=fullfile(analysis_struct_folder,'PV_mats_and_data.mat');
+file_name=fullfile(analysis_struct_folder,'PV_mats_and_data','intersect_data_',num2str(run_only_on_intersent_data),'fast_vel_',num2str(run_only_fast_co),'_vel_thresh_',num2str(vel_reduction_thresh),'.mat');
 save(file_name, '-struct', 'PV_data')
 
 
@@ -231,13 +238,16 @@ title(['full data intersect/union',num2str(nanmean(intersect_by_union(:)))])
 xlim([0 1])
 
 %save figure
-fig_name=fullfile(pop_vec_folder,['pop_vector_fig_dir_',num2str(dir_i),'_binsize_',num2str(allo_X_bin_size),'min_spike',num2str(min_n_spike),'intersect_data_',num2str(run_only_on_intersent_data),'.png']);
+fig_name=fullfile(pop_vec_folder,['pop_vector_fig_dir_',num2str(dir_i),'_binsize_',num2str(allo_X_bin_size),'min_spike',num2str(min_n_spike),'intersect_data_',num2str(run_only_on_intersent_data),'fast_vel_',num2str(run_only_fast_co),'_vel_thresh_',num2str(vel_reduction_thresh),'.png']);
 saveas(gcf,fig_name)
 %%
 function plot_corr_mat_and_tuning(relevant_corr,pos_tuning,pos_mat,ego_bin_center,ego_bin_dis,y_label,title_str)
 axes('position',pos_tuning);hold on;
 plot(ego_bin_center,relevant_corr.co.shuffle.tuning,'color',[.5 .5 .5])
-plot(ego_bin_center,relevant_corr.co.tuning,'linewidth',2,'color','m')
+[sem]=fn_compute_sem(relevant_corr.co.mat)';
+color_face=[255,153,204]./255;
+fill([ego_bin_center';flipud(ego_bin_center')],[relevant_corr.co.tuning'-sem;flipud(relevant_corr.co.tuning'+sem)],color_face,'FaceAlpha',0.5,'edgecolor','none');
+plot(ego_bin_center,relevant_corr.co.tuning,'linewidth',1,'color','m')
 plot(ego_bin_center,relevant_corr.co.lower_bound.tuning,'color',[.5 .5 .5])
 plot(ego_bin_center,relevant_corr.other_dir.tuning,'color',[0 0 0])
 
