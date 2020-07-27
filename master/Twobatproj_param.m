@@ -69,6 +69,10 @@ params.behav.dist_thresh_tracking=20; %meters
 params.behav.dist_thresh_solo=40; %meters
 params.behav.min_dist_opposite_dirs_before_after_CO=5; %meters
 params.behav.time_before_after_co_for_co_window=3.5; %(seconds) for defining the window around the co
+% for computing reduction in velocity:
+params.behav.long_dis_thresh=20;
+params.behav.short_dis_thresh=5;
+
 %params.behav.CO_window=[20 20]; %meters
 %params.behav.max_wind_CO=2*params.behav.frame_per_second;
 %params.behav.min_time_before_CO=2*params.behav.frame_per_second;
@@ -172,11 +176,16 @@ param_file_name=fullfile(param_folder,'solo_shuffle_params.mat');
 save(param_file_name, '-struct', 'fields_params')
 
 %% parameters for CO analysis basic analysis
+params.co.combine_rectangle_min_sep=3;
+params.co.min_coverage_of_ego_bin_2D=0.8;
 params.co.time_spent_minimum_for_1D_bins=0.2;
 params.co.frames_per_second=params.behav.frame_per_second;
 params.co.alpha_val=5;
 params.co.time_before_after_co_for_co_window=params.behav.time_before_after_co_for_co_window; %(seconds) for defining the window around the co
-params.co.signif_by_SI=0; %flag on signif ego cell by zscore of SI
+params.co.signif_by_SI=1; %flag on signif ego cell by zscore of SI
+params.co.min_n_spike_ego_corr=20;
+params.co.solo_X_bins_vector=params.solo.solo_X_bins_vector;
+
 % a. Egocentric time bins: 
 params.co.ker_SD=params.fields.ker_SD;
 params.co.time_before_after_co=params.behav.time_before_after_co;
@@ -244,8 +253,11 @@ params.per_field.dis_per_field_bin_vec_of_center=params.per_field.dis_per_field_
 params.per_field.n_bins=params.per_field.time_per_field_X_bins_vector;
 
 %shuffle:
-params.per_field.alpha_val=1;
+params.per_field.alpha_val=5;
 params.per_field.num_shuffles_per_field=10000;
+params.per_field.min_offset_perc=0.1; % perc of length of data need to think about this parameter!
+params.per_field.benf_correct=10;
+
 %width:
 params.per_field.width_at_heigth=50;%width of per field
 %smooth:
@@ -259,10 +271,10 @@ params.per_field.smooth_tol=1;
 %1. duing all pop analysis on nice place cells: for now as in pop vec analysis
 params.per_field.min_n_spike=100;  
 params.per_field.SI_threshold=1;
-
+params.per_field.buffer_for_solo_shuffle_per_field=2;%m
 %2. duing all pop analysis on nice tuning per field:
 params.per_field.min_n_spike_per_field=30;
-params.per_field.min_r_length_per_field=0.5; %min length of non nan firing rate in per field
+params.per_field.min_r_length_per_field=params.co.min_coverage_of_ego_bin_2D; %min length of non nan firing rate in per field
 
 %3. tuning width params:
 params.per_field.min_dis_pos_neg=0.25*1e6;%us
