@@ -31,6 +31,7 @@ load(co_param_file_name)
 per_field_cell_dir_count=0;
 fr_count_all=0;
 cell_dir_per_field_count=0;
+fr_count_signif=0;
 
 all_per_field_valid_tuning={};
 all_pos_width=[];
@@ -42,7 +43,9 @@ all_pos_rise_time=[];
 all_neg_rise_time=[];
 all_compound_pos_rise_time=[];
 all_compound_neg_rise_time=[];
-
+all_peak_fr_pos_sig_bins=[];
+all_ego_position_pos_sig_bins=[];
+all_ego_position_neg_sig_bins=[];
 %% TO DO:
 %check why there are large fields
 %hist of per field sizes
@@ -112,6 +115,11 @@ for cell_i=1:length(file_names)
                 n_fields_per_cell_for_cell_scatter(cell_dir_per_field_count)=length([cell_co_solo_initial_analysis.solo(dir_i).fields.loc]);
 
                 n_fields_per_cell_for_field_scatter(fr_count_all)=length([cell_co_solo_initial_analysis.solo(dir_i).fields.loc]);
+                
+                all_per_field_peak_solo_pos{cell_dir_per_field_count,field_i}=solo_field_data(field_i).loc;
+                all_per_field_peak_solo{cell_dir_per_field_count,field_i}=solo_field_data(field_i).peak;
+                all_per_field_width_solo{cell_dir_per_field_count,field_i}=solo_field_data(field_i).width_href;
+
                 %2. get solo prop per field:
                 per_field_solo_height(fr_count_all)=solo_field_data(field_i).peak;
                 per_field_solo_nrm_height(fr_count_all)=solo_field_data(field_i).peak./nanmean(cell_co_solo_initial_analysis.solo(dir_i).PSTH_for_field_detection);
@@ -148,8 +156,19 @@ for cell_i=1:length(file_names)
                     all_neg_rise_time=[all_neg_rise_time,rise_and_width_data.neg_rise_time];
                     all_compound_pos_rise_time=[all_compound_pos_rise_time,rise_and_width_data.pos_rise_time_compund];
                     all_compound_neg_rise_time=[all_compound_neg_rise_time,rise_and_width_data.neg_rise_time_compund];
+                    if per_field_data(field_i).dis_signif_field.signif_based_on_extreme_bins==1  
+                    all_peak_fr_pos_sig_bins=[all_peak_fr_pos_sig_bins,per_field_data(field_i).tuning_dis_x_fr_per_field([per_field_data(field_i).dis_signif_field.pos_signif])];
+                    all_ego_position_pos_sig_bins=[all_ego_position_pos_sig_bins,dis_per_field_bin_vec_of_center([per_field_data(field_i).dis_signif_field.pos_signif])]; 
+                    all_ego_position_neg_sig_bins=[all_ego_position_neg_sig_bins,dis_per_field_bin_vec_of_center([per_field_data(field_i).dis_signif_field.neg_signif])]; 
+                    %
+                    fr_count_signif=fr_count_signif+1;
+                    pos_signif_position_per_field{fr_count_signif}=dis_per_field_bin_vec_of_center([per_field_data(field_i).dis_signif_field.pos_signif]);
+                    neg_signif_position_per_field{fr_count_signif}=dis_per_field_bin_vec_of_center([per_field_data(field_i).dis_signif_field.neg_signif]);
+                    pos_signif_zscore_per_field{fr_count_signif}=zscore_r([per_field_data(field_i).dis_signif_field.pos_signif]);
+                    neg_signif_zscore_per_field{fr_count_signif}=zscore_r([per_field_data(field_i).dis_signif_field.neg_signif]);
+                    solo_field_hight_per_field_for_signif_fields(fr_count_signif)=solo_field_data(field_i).peak;
+                    end
                     
-              
                 else
                     id_per_field_non_signif(fr_count_all)=1;
                     id_per_field_pos_tuning(fr_count_all)=0;
@@ -171,7 +190,17 @@ for cell_i=1:length(file_names)
 %     corrs=tril(corr(squeeze(all_ego_tuning(cell_i,:,:))','rows','pairwise'),-1);
 %     corr_ego_tuning_between_dirs(cell_i)=corrs(2,1);
 end
-   
+pos_signif_position_per_field_mat=convert_to_mat(pos_signif_position_per_field);
+neg_signif_position_per_field_mat=convert_to_mat(neg_signif_position_per_field);
+pos_signif_zscore_per_field_mat=convert_to_mat(pos_signif_zscore_per_field);
+neg_signif_zscore_per_field_mat=convert_to_mat(neg_signif_zscore_per_field);
+solo_field_hight_per_field_for_signif_fields_repmat_pos=repmat(solo_field_hight_per_field_for_signif_fields',1,size(pos_signif_position_per_field_mat,2));
+solo_field_hight_per_field_for_signif_fields_repmat_neg=repmat(solo_field_hight_per_field_for_signif_fields',1,size(neg_signif_position_per_field_mat,2));
+
+% figure; 
+% subplot(1,2,1);scatter(solo_field_hight_per_field_for_signif_fields_repmat_pos(:),pos_signif_position_per_field_mat(:),[],pos_signif_zscore_per_field_mat(:));colorbar
+% subplot(1,2,2);scatter(solo_field_hight_per_field_for_signif_fields_repmat_neg(:),neg_signif_position_per_field_mat(:),[],neg_signif_zscore_per_field_mat(:));colorbar
+
 %% compute corrs and shuffles:
 
 %1. cell ego tuning between directions:
@@ -198,10 +227,16 @@ Isolation_dis_relevant_cells=Isolation_dis(~cells_to_remove);
 n_fields_per_cell_relevant_cells=n_fields_per_cell_for_cell_scatter(~cells_to_remove);
 
 per_field_tuning_curve_relevant_cells=all_per_field_valid_tuning(~cells_to_remove,:);
+all_per_field_peak_solo_pos_relevant_cells=all_per_field_peak_solo_pos(~cells_to_remove,:);
+all_per_field_peak_solo_relevant_cells=all_per_field_peak_solo(~cells_to_remove,:);
+all_per_field_width_solo_relevant_cells =all_per_field_width_solo(~cells_to_remove,:);
 % b. compute correlations within a cell and between cells:
 data=per_field_tuning_curve_relevant_cells;
 field_signif_per_cell=field_signif_per_cell(~cells_to_remove,:);
-[per_field_cells_corr_between,per_field_cells_corr_within,per_field_mean_corr_within]=compute_corrs_within_and_between_cells_per_field(data,field_signif_per_cell);
+[per_field_cells_corr_between,per_field_cells_corr_within,per_field_mean_corr_within,dist_peak_solo,diff_peak_solo]=compute_corrs_within_and_between_cells_per_field(data,field_signif_per_cell,all_per_field_peak_solo_pos_relevant_cells,all_per_field_peak_solo_relevant_cells);
+% [r,c]=find(cellfun(@(x) x==0,field_signif_per_cell));
+% data([r,c])={};
+% data=reshape(data,size(per_field_tuning_curve_relevant_cells,1),[])
 n_fields_per_cell=sum(cellfun(@(a) ~isempty(a),data),2);
 n_pairs=factorial(n_fields_per_cell)./(factorial(2).*factorial(n_fields_per_cell-2));
 n_fields_per_cell_relevant_fields=repelem(n_fields_per_cell_relevant_cells,n_pairs);
@@ -213,12 +248,75 @@ figure('units','normalized','outerposition',[0 0 1 1])
 % ego tuning:
 %-----------------
 % corr between directions all cells
-subplot(4,7,1)
-plot_hists(all_cells_ego_corr_within,all_cells_ego_corr_between,'all cells egocentric corr (between directions)')
+% subplot(4,7,1)
+% plot_hists(all_cells_ego_corr_within,all_cells_ego_corr_between,'all cells egocentric corr (between directions)')
+% 
+% % corr between directions ego signif cells
+% subplot(4,7,2)
+% plot_hists(ego_signif_cells_ego_corr_within,ego_signif_cells_ego_corr_between,'ego signif cells egocentric corr (between directions)')
+subplot(4,7,3)
+for bin_i=1:length(dis_per_field_bin_vec_of_center)
+    idx=find(all_ego_position_pos_sig_bins==dis_per_field_bin_vec_of_center(bin_i));
+    mean_fr_per_bin(bin_i)=nanmean(all_peak_fr_pos_sig_bins(idx));
+end
+plot(dis_per_field_bin_vec_of_center,mean_fr_per_bin)
+xlim([-40 40])
+xlabel('Inter-bat distance (m)')
+ylabel('mean FR')
+title('mean FR for positive significant bins')
 
-% corr between directions ego signif cells
-subplot(4,7,2)
-plot_hists(ego_signif_cells_ego_corr_within,ego_signif_cells_ego_corr_between,'ego signif cells egocentric corr (between directions)')
+subplot(4,7,4)
+x=all_ego_position_pos_sig_bins;
+y=all_peak_fr_pos_sig_bins;
+x_name='Inter-bat distance (m)';
+y_name='Firing rate';
+plot_scatter(x,y,x_name,y_name)
+title(sprintf('position and firing rate\n of position significant bins'))
+xlim([-40 40])
+
+subplot(4,7,5)
+h=hist(all_ego_position_pos_sig_bins,dis_per_field_bin_vec_of_center,'g');
+bar(dis_per_field_bin_vec_of_center,h/sum(h))
+xlabel('Inter-bat distance (m)')
+ylabel('proportion')
+title('pos signif bins')
+
+subplot(4,7,6)
+h=hist(all_ego_position_neg_sig_bins,dis_per_field_bin_vec_of_center,'r');
+bar(dis_per_field_bin_vec_of_center,h/sum(h))
+xlabel('Inter-bat distance (m)')
+ylabel('proportion')
+title('neg signif bins')
+
+% [c,n]=histc(all_ego_position_pos_sig_bins,dis_per_field_bin_vec_of_center);
+% results = cell(length(dis_per_field_bin_vec_of_center),1);
+% for K = 1 : length(dis_per_field_bin_vec_of_center)
+%   results{K} = all_peak_fr_pos_sig_bins( n == K );
+% end
+% mean_fr=cellfun(@mean,results);
+% subplot(4,7,5)
+% plot(dis_per_field_bin_vec_of_center,mean_fr)
+
+subplot(4,7,7)
+x=dist_peak_solo;
+y=per_field_cells_corr_within;
+x_name='distance peak solo';
+y_name='per field corr';
+plot_scatter(x,y,x_name,y_name)
+
+subplot(4,7,14)
+x=dist_peak_solo;
+y=diff_peak_solo;
+x_name='distance peak solo';
+y_name='diff peak solo';
+plot_scatter(x,y,x_name,y_name)
+
+% subplot(4,7,7)
+% x=diff_peak_solo;
+% y=per_field_cells_corr_within;
+% x_name='diff peak solo';
+% y_name='per field corr';
+% plot_scatter(x,y,x_name,y_name)
 
 % % tuning ego cells
 % subplot(4,7,3)
@@ -278,12 +376,12 @@ subplot(4,7,8:9)
 plot_hists(per_field_cells_corr_within,per_field_cells_corr_between,'per field egocentric correlations')
 
 % scatter of isolation distance and per field mean corr:    
-subplot(4,7,10:11)
-plot_scatter(isolation_dis_cell_relevant_fields',per_field_cells_corr_within,'Isolation distance','pairs corr per field')
+%subplot(4,7,10:11)
+%plot_scatter(isolation_dis_cell_relevant_fields',per_field_cells_corr_within,'Isolation distance','pairs corr per field')
 
 %scatter of n fields and mean corr
-subplot(4,7,12:13)
-plot_scatter(n_fields_per_cell_relevant_fields',per_field_cells_corr_within,'n fields','pairs corr per field')
+%subplot(4,7,12:13)
+%plot_scatter(n_fields_per_cell_relevant_fields',per_field_cells_corr_within,'n fields','pairs corr per field')
 
 % Tuning width and tise time -  per field:
 %-----------------------------------------
@@ -545,3 +643,11 @@ plot(repmat(unique(M(:,2)),1,2)+0.2*cells_i,reshape([extreme_prctile_data{:}],2,
 s = get(lh, 'string'); 
 set(lh, 'string', s(1:3));
  end
+ function mat=convert_to_mat(cell)
+    maxSize = max(cellfun(@numel,cell));
+    fcn = @(x) [x nan(1,maxSize-numel(x))];
+    % a. time to co
+    rmat = cellfun(fcn,cell,'UniformOutput',false);
+    mat = vertcat(rmat{:});
+end
+
