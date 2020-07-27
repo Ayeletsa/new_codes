@@ -125,6 +125,8 @@ for ii_dir = 1:2
     end
     %% compute SI:
       information_per_spike = FE_PSTH.SI_bits_spike  ;
+  
+    
     %% save into struct
     solo(ii_dir).bsp.ts_usec = bsp_ts_usec_mat;
     solo(ii_dir).bsp.x_pos = bsp_x_pos_mat;
@@ -143,6 +145,8 @@ for ii_dir = 1:2
     solo(ii_dir).fields=fields;
     solo(ii_dir).FE_struct_for_tamirs_code=FE;
     solo(ii_dir).PSTH_for_2D_bin=PSTH_for_2D_bin;
+    solo(ii_dir).mean_solo_y_per_x_pos=mean_solo_y_per_x_pos;
+    
 end
 
 end
