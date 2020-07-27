@@ -1,0 +1,260 @@
+%% Population per field -  scatters allo fr for signif bins
+clear
+
+%% data:
+dir_data='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_solo_initial_analysis\';
+dir_info=dir(dir_data);
+analysis_struct_folder='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\population\';
+
+
+co_shuffle_structs_folder = 'D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\co_shuffling_struct\';
+figure_folder='D:\Ayelet\2bat_proj\Analysis\new_code\figures\population\';
+
+inclusion_dir='D:\Ayelet\2bat_proj\Analysis\new_code\analysis_structs\inclusion_cells_struct\';
+inclusion_dir_info=dir(inclusion_dir);
+inclusion_names={inclusion_dir_info.name};
+inclusion_names([inclusion_dir_info.isdir])=[];
+cell_ind=regexp(inclusion_names{2},'cell_');
+
+cell_nums_inclusion=(cellfun(@(c) c(cell_ind+5:cell_ind+7),inclusion_names,'UniformOutput',false));
+
+%% params for valid cells during CO
+param_folder='D:\Ayelet\2bat_proj\Analysis\new_code\params\';
+pop_param_file_name=fullfile(param_folder,'co_population_params.mat');
+load(pop_param_file_name)
+per_field_param_file_name=fullfile(param_folder,'per_field_params.mat');
+load(per_field_param_file_name)
+co_param_file_name=fullfile(param_folder,'co_params.mat');
+load(co_param_file_name)
+
+%% initialize:
+fr_count_signif=0;
+inter_field_count=0;
+%% TO DO:
+%check why there are large fields
+%hist of per field sizes
+% set minimum spikes for per field analysis
+%%
+file_names={dir_info.name};
+file_names=file_names(find([dir_info.isdir]==0));
+
+%% 1. run over cells:
+for cell_i=1:length(file_names)
+    % load data:
+    load(fullfile(dir_data,file_names{cell_i}))
+    cell_num=cell_co_solo_initial_analysis.exp_data.cell_num;
+    %load cell's inclusion:
+    Match=cellfun(@(a) find(contains(a,num2str(cell_num))) , cell_nums_inclusion, 'UniformOutput', 0);
+    r=find(cellfun(@(c) ~isempty(c),Match));
+    load(fullfile(inclusion_dir,inclusion_names{r}))
+    
+    
+    for dir_i=1:2
+        
+        % basic cell data:
+        bat=cell_co_solo_initial_analysis.exp_data.bat;
+        day=cell_co_solo_initial_analysis.exp_data.day;
+        cell_num=cell_co_solo_initial_analysis.exp_data.cell_num;
+        %ego tuning of the cell:
+        all_ego_tuning(cell_i,dir_i,:)=cell_co_solo_initial_analysis.co(dir_i).firing_rate.dis_m(1,:);
+        all_zscore_ego_tuning(cell_i,dir_i,:)=zscore(cell_co_solo_initial_analysis.co(dir_i).firing_rate.dis_m(1,:));
+        
+        %% ego signif cell
+        
+        %         shuffle_struct_name = ['co_shuffling_struct_b',num2str(bat),'_d',num2str( day),'_c',num2str(cell_num),'.mat'];
+        %         shuffle_file_name = fullfile(co_shuffle_structs_folder,shuffle_struct_name);
+        
+        ego_signif_cells(cell_i,dir_i)=inclusion(dir_i).ego_cell;
+        pyramidal_cells(cell_i,dir_i)=inclusion(dir_i).pyr;
+        %% per field data
+        %1. Test if run on per field:
+        
+        %         a=sum(~isnan(cell_co_solo_initial_analysis.solo(dir_i).spikes.ts_usec(:)))+sum(~isnan(cell_co_solo_initial_analysis.co(dir_i).spikes.ts_usec(:)))>=min_n_spike;
+        %         b=cell_co_solo_initial_analysis.solo(dir_i).SI>SI_threshold;
+        %         c=~isempty(cell_co_solo_initial_analysis.solo(dir_i).fields);
+        %         d=cell_co_solo_initial_analysis.exp_data.mean_fr<max_for_pyramidal;
+        %         per_field_cell_cond=a & b & c & d;
+        if inclusion(dir_i).place_cell
+            
+            per_field_data=cell_co_solo_initial_analysis.co(dir_i).per_field_href;
+            solo_field_data=cell_co_solo_initial_analysis.solo(dir_i).fields;
+            inter_field_data=cell_co_solo_initial_analysis.co(dir_i).inter_field;
+            
+             %% inter_field
+        
+             for field_i=1:length(inter_field_data)
+                % run only on per fields that obey conditions:
+                r=inter_field_data(field_i).tuning_dis_x_fr_per_field;
+                [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
+                a=max(ind_length)>=min_r_length_per_field*length(r); %enough data that is not nan in tuning curve
+                b=inter_field_data(field_i).number_of_spikes_per_field>=min_n_spike_per_field;% enough spikes
+                per_field_cond=a & b;
+                if per_field_cond
+                    zscore_r=zscore(r);                  
+                    if inter_field_data(field_i).dis_signif_field.signif_based_on_extreme_bins==1
+                        fr_count_signif=fr_count_signif+1;
+                        inter_field_count=inter_field_count+1;
+                        inter_field_ind(inter_field_count)=fr_count_signif;
+                        pos_signif_position_per_field{fr_count_signif}=dis_per_field_bin_vec_of_center([inter_field_data(field_i).dis_signif_field.pos_signif]);
+                        neg_signif_position_per_field{fr_count_signif}=dis_per_field_bin_vec_of_center([inter_field_data(field_i).dis_signif_field.neg_signif]);
+                        pos_signif_zscore_per_field{fr_count_signif}=zscore_r([inter_field_data(field_i).dis_signif_field.pos_signif]);
+                        neg_signif_zscore_per_field{fr_count_signif}=zscore_r([inter_field_data(field_i).dis_signif_field.neg_signif]);
+                        solo_field_hight_per_field_for_signif_fields(fr_count_signif)=max(inter_field_data(field_i).tuning_during_solo);
+                        zscore_tuning(fr_count_signif,:)=zscore_r;
+                    end
+                end
+             end
+            
+            %% fields:
+            for field_i=1:length(per_field_data)
+                % run only on per fields that obey conditions:
+                r=per_field_data(field_i).tuning_dis_x_fr_per_field;
+                [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
+                a=max(ind_length)>=min_r_length_per_field*length(r); %enough data that is not nan in tuning curve
+                b=per_field_data(field_i).number_of_spikes_per_field>=min_n_spike_per_field;% enough spikes
+                per_field_cond=a & b;
+                if per_field_cond
+
+                     zscore_r=zscore_ignore_nan(r);                 
+                    if per_field_data(field_i).dis_signif_field.signif_based_on_extreme_bins==1
+                        fr_count_signif=fr_count_signif+1;
+                        pos_signif_position_per_field{fr_count_signif}=dis_per_field_bin_vec_of_center([per_field_data(field_i).dis_signif_field.pos_signif]);
+                        neg_signif_position_per_field{fr_count_signif}=dis_per_field_bin_vec_of_center([per_field_data(field_i).dis_signif_field.neg_signif]);
+                        pos_signif_zscore_per_field{fr_count_signif}=zscore_r([per_field_data(field_i).dis_signif_field.pos_signif]);
+                        neg_signif_zscore_per_field{fr_count_signif}=zscore_r([per_field_data(field_i).dis_signif_field.neg_signif]);
+                        solo_field_hight_per_field_for_signif_fields(fr_count_signif)=solo_field_data(field_i).peak;
+                        zscore_tuning(fr_count_signif,:)=zscore_r;
+                    end
+                end
+            end
+          
+        end
+    end
+    %
+end
+%%
+pos_signif_position_per_field_mat=convert_to_mat(pos_signif_position_per_field);
+neg_signif_position_per_field_mat=convert_to_mat(neg_signif_position_per_field);
+pos_signif_zscore_per_field_mat=convert_to_mat(pos_signif_zscore_per_field);
+neg_signif_zscore_per_field_mat=convert_to_mat(neg_signif_zscore_per_field);
+neg_nan_rows=find(sum(isnan(neg_signif_position_per_field_mat),2)==size(neg_signif_position_per_field_mat,2));
+pos_nan_rows=find(sum(isnan(pos_signif_position_per_field_mat),2)==size(pos_signif_position_per_field_mat,2));
+pos_signif_position_per_field_mat(pos_nan_rows,:)=[];
+pos_signif_zscore_per_field_mat(pos_nan_rows,:)=[];
+neg_signif_position_per_field_mat(neg_nan_rows,:)=[];
+neg_signif_zscore_per_field_mat(neg_nan_rows,:)=[];
+pos_solo_field_hight_per_field_for_signif_fields=solo_field_hight_per_field_for_signif_fields;pos_solo_field_hight_per_field_for_signif_fields(pos_nan_rows)=[];
+neg_solo_field_hight_per_field_for_signif_fields=solo_field_hight_per_field_for_signif_fields;neg_solo_field_hight_per_field_for_signif_fields(neg_nan_rows)=[];
+
+solo_field_hight_per_field_for_signif_fields_repmat_pos=repmat(pos_solo_field_hight_per_field_for_signif_fields',1,size(pos_signif_position_per_field_mat,2));
+solo_field_hight_per_field_for_signif_fields_repmat_neg=repmat(neg_solo_field_hight_per_field_for_signif_fields',1,size(neg_signif_position_per_field_mat,2));
+clim=[-2.5 4];
+colormap jet
+%% plot
+figure;
+subplot(3,2,1);
+x=pos_signif_position_per_field_mat(:);
+y=(solo_field_hight_per_field_for_signif_fields_repmat_pos(:));
+color_data=pos_signif_zscore_per_field_mat(:);
+x_str={'Inter-bat distance (m)'};
+y_str={'solo fr (Hz)'};
+title_str={'pos signif fields'};
+plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+
+subplot(3,2,2);
+x=neg_signif_position_per_field_mat(:);
+y=(solo_field_hight_per_field_for_signif_fields_repmat_neg(:));
+color_data=neg_signif_zscore_per_field_mat(:);
+x_str={'Inter-bat distance (m)'};
+y_str={'solo fr (Hz)'};
+title_str={'neg signif fields'};
+plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+
+subplot(3,2,3);
+x=pos_signif_position_per_field_mat(:);
+y=log10(solo_field_hight_per_field_for_signif_fields_repmat_pos(:)+1);
+color_data=pos_signif_zscore_per_field_mat(:);
+x_str={'Inter-bat distance (m)'};
+y_str={'log solo fr (Hz)'};
+title_str={'pos signif fields'};
+plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+
+subplot(3,2,4);
+x=neg_signif_position_per_field_mat(:);
+y=log10(solo_field_hight_per_field_for_signif_fields_repmat_neg(:)+1);
+color_data=neg_signif_zscore_per_field_mat(:);
+x_str={'Inter-bat distance (m)'};
+y_str={'log solo fr (Hz)'};
+title_str={'neg signif fields'};
+plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+%sort peak:
+% [~,ind_field_sorted]=sort(solo_field_hight_per_field_for_signif_fields(1:inter_field_ind(1)-1));
+% [~,ind_inter_field_sorted]=sort(solo_field_hight_per_field_for_signif_fields(inter_field_ind(1):end));
+% ind_sort_all=[ind_inter_field_sorted,ind_field_sorted+inter_field_ind(1)];
+[val,ind_sort_pos]=sort(pos_solo_field_hight_per_field_for_signif_fields);
+[val,ind_sort_neg]=sort(neg_solo_field_hight_per_field_for_signif_fields);
+
+sorted_solo_field_hight_per_field_for_signif_fields_repmat_pos=repmat(1:size(pos_signif_position_per_field_mat,1),1,size(pos_signif_position_per_field_mat,2));
+sorted_solo_field_hight_per_field_for_signif_fields_repmat_neg=repmat(1:size(neg_signif_position_per_field_mat,1),1,size(neg_signif_position_per_field_mat,2));
+pos_signif_position_per_field_mat=pos_signif_position_per_field_mat(ind_sort_pos,:);
+neg_signif_position_per_field_mat=neg_signif_position_per_field_mat(ind_sort_neg,:);
+pos_signif_zscore_per_field_mat=pos_signif_zscore_per_field_mat(ind_sort_pos,:);
+neg_signif_zscore_per_field_mat=neg_signif_zscore_per_field_mat(ind_sort_neg,:);
+
+subplot(3,2,5);
+x=pos_signif_position_per_field_mat(:);
+y=sorted_solo_field_hight_per_field_for_signif_fields_repmat_pos(:);
+color_data=pos_signif_zscore_per_field_mat(:);
+x_str={'Inter-bat distance (m)'};
+y_str={'sort by solo fr'};
+title_str={'pos signif fields'};
+plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+
+subplot(3,2,6);
+x=neg_signif_position_per_field_mat(:);
+y=sorted_solo_field_hight_per_field_for_signif_fields_repmat_neg(:);
+color_data=neg_signif_zscore_per_field_mat(:);
+x_str={'Inter-bat distance (m)'};
+y_str={'sort by solo fr'};
+title_str={'neg signif fields'};
+plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+
+%% save
+file_name=fullfile(figure_folder,'scatters_allo_fr_for_signif_bins.jpg');
+saveas(gcf,file_name)
+
+%%
+%sort z score by allo fr:
+[~,ind_sort]=sort(solo_field_hight_per_field_for_signif_fields);
+zscore_tuning_sort=zscore_tuning(ind_sort,:);
+n_tuning=length(solo_field_hight_per_field_for_signif_fields);
+wind=30;
+step=10;
+bin_start=1:step:n_tuning-wind;
+bin_end=1+wind:step:n_tuning;bin_end(end)=n_tuning;
+mean_zsccore=[];
+for bin_i=1:length(bin_start)
+    mean_zsccore(bin_i,:)=nanmean(zscore_tuning_sort(bin_start(bin_i):bin_end(bin_i),:));
+    
+end
+x=1:length(bin_start);
+shifted=mean_zsccore+x';
+figure; plot(dis_per_field_bin_vec_of_center,shifted')
+xlabel('Inter-bat distance (m)')
+ylabel('Shifted z score mean')
+title(sprintf('seperating to groups based on solo fr\nsliding window of %d with steps of %d',wind,step))
+
+file_name=fullfile(figure_folder,['sliding_wind_over_solo_peak_per_field_zscore_mean_step_',num2str(step),'.jpg']);
+saveas(gcf,file_name)
+
+%%  PLOT SUBfunctions
+function plot_scatter(x,y,color_data,x_str,y_str,title_str,clim)
+scatter(x,y,[],color_data,'.')
+colorbar;
+%caxis(clim)
+xlim([-40 40])
+ylim([min(y) max(y)])
+xlabel(x_str)
+ylabel(y_str)
+title(title_str)
+end
