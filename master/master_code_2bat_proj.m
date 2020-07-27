@@ -13,15 +13,15 @@ population_param_file_name=fullfile(param_folder,'co_population_params.mat');
 co_shuffle_param_file_name=fullfile(param_folder,'co_shuffle_params.mat');
 solo_shuffle_param_file_name=fullfile(param_folder,'solo_shuffle_params.mat');
 field_param_file_name=fullfile(param_folder,'fields_params.mat');
+
 per_field_param_file_name=fullfile(param_folder,'per_field_params.mat');
 population_vector_param_file_name=fullfile(param_folder,'population_vector_params.mat');
 inclusion_cells_params_param_file_name=fullfile(param_folder,'inclusion_cells_params.mat');
 
-
 %% 1. analyze behavior 
-create_behavior_structs(behav_param_file_name,dir_param_file_name)
+create_behavior_structs(behav_param_file_name,dir_param_file_name,solo_param_file_name,co_param_file_name)
 %% 2. initial CO and solo anlysis
-run_solo_initial=1;
+run_solo_initial=0;
 run_co_initial=1;
 initial_co_solo_analysis(behav_param_file_name,dir_param_file_name,solo_param_file_name,co_param_file_name,field_param_file_name,per_field_param_file_name,run_solo_initial,run_co_initial)
 %% 3. CO shuffling
@@ -34,8 +34,13 @@ plot_co_main_cell_fig(co_param_file_name,dir_param_file_name,population_param_fi
 %% 6. co figure per field time
 plot_co_main_cell_fig_time_per_field(dir_param_file_name,population_param_file_name,co_param_file_name,per_field_param_file_name)
 
+%% per field comp to solo
+plot_co_main_cell_fig_time_per_field_comp_to_solo(dir_param_file_name,population_param_file_name,co_param_file_name,per_field_param_file_name)
+
 %% 7.CO figure with per inter field analysis
 plot_co_main_cell_fig_new_inter_field(dir_param_file_name,population_param_file_name,co_param_file_name,per_field_param_file_name)
+%%
+plot_co_SVD_cell_fig(co_param_file_name,dir_param_file_name,population_param_file_name,per_field_param_file_name)
 
 %% create inclustion lists:
 calc_inclusion_criteria(inclusion_cells_params_param_file_name)
