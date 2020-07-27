@@ -164,7 +164,10 @@ for cell_i=1:length(file_names)
 %     corrs=tril(corr(squeeze(all_ego_tuning(cell_i,:,:))','rows','pairwise'),-1);
 %     corr_ego_tuning_between_dirs(cell_i)=corrs(2,1);
 end
-   %% divde solo fr to 4 subdevisions:
+id_per_field_non_signif=logical(id_per_field_non_signif);
+id_per_field_pos_tuning=logical(id_per_field_pos_tuning);
+id_per_field_neg_tuning=logical(id_per_field_neg_tuning);
+%% divde solo fr to 4 subdevisions:
    marings=prctile(per_field_solo_height,[25,50,75]);
    field_group{1}=find(per_field_solo_height<marings(1));
    field_group{2}=find(per_field_solo_height>marings(1) & per_field_solo_height<marings(2));
