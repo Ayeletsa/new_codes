@@ -16,6 +16,9 @@ load(co_param_file_name)
 
 files = dir(cell_co_solo_initial_analysis_struct_folder);
 behavior_struct_names = {files.name};
+is_dir=[files.isdir];
+behavior_struct_names=behavior_struct_names(~is_dir);
+
 files = dir(co_shuffle_folder_name);
 co_shuffle_struct_names = {files.name};
 
@@ -40,9 +43,9 @@ fsize = 14;
 
 
 %% plot for each cell
-for ii_cell =3:length(behavior_struct_names)
+for ii_cell =1:length(behavior_struct_names)
     ii_cell
-    try
+    %try
     signif=0;
     %% load data
     
@@ -200,8 +203,12 @@ for ii_cell =3:length(behavior_struct_names)
                 axes(co_ax{1})
                 hold on
                 line([0 0],tunnel_limits,'Color',[.7 .7 .7],'LineStyle','--')
-                plot(behavior_struct.co(ii_dir).bsp.dis_m(:),behavior_struct.co(ii_dir).bsp.x_pos(:),'.','color',spike_colors{3})
-                plot(behavior_struct.co(ii_dir).spikes.dis_m(:),behavior_struct.co(ii_dir).spikes.x_pos(:),'.','color',spike_colors{ii_dir},'markersize',8)
+                 plot(behavior_struct.co(ii_dir).bsp_full.dis_m(:),behavior_struct.co(ii_dir).bsp_full.x_pos(:),'.','color',spike_colors{3})
+                plot(behavior_struct.co(ii_dir).spikes_full.dis_m(:),behavior_struct.co(ii_dir).spikes_full.x_pos(:),'.','color',spike_colors{ii_dir},'markersize',8)
+              
+                plot(behavior_struct.co(ii_dir).bsp.dis_m(:),behavior_struct.co(ii_dir).bsp.x_pos(:),'.','color',[.5 .6 .6])
+                plot(behavior_struct.co(ii_dir).spikes.dis_m(:),behavior_struct.co(ii_dir).spikes.x_pos(:),'.','color','b','markersize',8)
+                
                 set(gca,'xlim',[-dis_before_after_co dis_before_after_co],...
                     'ylim',tunnel_limits,...
                     'ytick',tunnel_limits)
@@ -213,7 +220,9 @@ for ii_cell =3:length(behavior_struct_names)
                 axes(co_ax{2})
                 hold on
                 plot(co_shuffle_struct(ii_dir).shuffled_data.ego_bin_centers,co_shuffle_struct(ii_dir).shuffled_data.ego_firing_rate(2:end,:),'color',spike_colors{3},'LineWidth',lwidth);
-                plot(co_shuffle_struct(ii_dir).shuffled_data.ego_bin_centers,co_shuffle_struct(ii_dir).shuffled_data.ego_firing_rate(1,:),'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                plot(co_shuffle_struct(ii_dir).shuffled_data.ego_bin_centers,behavior_struct.co(ii_dir).firing_rate_full.dis_m(1,:),'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                plot(co_shuffle_struct(ii_dir).shuffled_data.ego_bin_centers,co_shuffle_struct(ii_dir).shuffled_data.ego_firing_rate(1,:),'color','b','LineWidth',lwidth);
+
                 max_y = round(max(max(co_shuffle_struct(ii_dir).shuffled_data.ego_firing_rate))*1.1*10) / 10;
                 if max_y < 1
                     max_y = 1;
@@ -228,11 +237,11 @@ for ii_cell =3:length(behavior_struct_names)
                 % allocentric firing rate
                 axes(co_ax{3})
                 hold on
-                plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
+              %  plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(2:end,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{3},'LineWidth',lwidth);
                 plot(behavior_struct.solo(ii_dir).PSTH_for_field_detection,behavior_struct.solo(1).x_pos_firing_rate{1, 2},'color',solo_colors{ii_dir},'LineWidth',2);
-                plot(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate(1,:),co_shuffle_struct(ii_dir).shuffled_data.allo_bin_centers,'color',spike_colors{ii_dir},'LineWidth',lwidth);
-                max_x = round(max([max(behavior_struct.solo(ii_dir).PSTH_for_field_detection),max(max(co_shuffle_struct(ii_dir).shuffled_data.allo_firing_rate))])*1.1*10) / 10;
-                if max_x~=0
+                plot(cell_co_solo_initial_analysis.co(ii_dir).firing_rate.allo_x_pos(1,:),cell_co_solo_initial_analysis.co(ii_dir).firing_rate.allo_x_pos (2,:),'color',spike_colors{ii_dir},'LineWidth',lwidth);
+                max_x = round(max([max(behavior_struct.solo(ii_dir).PSTH_for_field_detection),max(max(cell_co_solo_initial_analysis.co(ii_dir).firing_rate.allo_x_pos(1,:)))])*1.1*10) / 10;
+                if max_x~=0 & ~isnan(max_x)
                     set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                 end
                 str = sprintf('Hz');
@@ -365,7 +374,7 @@ for ii_cell =3:length(behavior_struct_names)
                 %         plot(behavior_struct.co(ii_dir).bsp.dis_m(:),behavior_struct.co(ii_dir).bsp.x_pos(:),'.','color',spike_colors{3})
                 %         plot(behavior_struct.co(ii_dir).spikes.dis_m(:),behavior_struct.co(ii_dir).spikes.x_pos(:),'.','color',spike_colors{ii_dir},'markersize',8)
                 normalize_to_other_max=[];
-                field_density_mat_X_Y=behavior_struct.co(ii_dir).firing_rate.field_density_smoothed_XY_with_NaN;
+                field_density_mat_X_Y=behavior_struct.co(ii_dir).firing_rate_full.field_density_smoothed_XY_with_NaN;
              
                 
 %                 allo_bin_size=behavior_struct.co(ii_dir).firing_rate.allo_bin_size;
@@ -377,10 +386,15 @@ for ii_cell =3:length(behavior_struct_names)
                     'ytick',tunnel_limits)
                 ylabel('X pos. (m)','fontsize',fsize)
                 xlabel('Dis. between bats (m)','fontsize',fsize)
+                %x_pos_valid_rectangle=behavior_struct.co(ii_dir).firing_rate.x_pos_valid_rectangle ; 
+                hold on;
+                x_pos_valid=cell_co_solo_initial_analysis.co(ii_dir).x_pos_valid_rectangle ;
+                plot(-41*ones(size(x_pos_valid)),x_pos_valid,'.k','markersize',10)
                 max_fr=max(field_density_mat_X_Y(:));
                 text(xlimits(1)+0.4*xlimits(1),0.95*ylimits(2),sprintf('%.1f Hz',max_fr))
-                box off
-                
+                xlim([-41 40])
+                                box off
+
                 % egocentric firing rate
                 axes(co_ax{12})
                 hold on
@@ -404,7 +418,7 @@ for ii_cell =3:length(behavior_struct_names)
                 % plot(behavior_struct.co(ii_dir).firing_rate.solo_x_pos(1,:),behavior_struct.co(ii_dir).firing_rate.solo_x_pos(2,:),'color',solo_colors{ii_dir},'LineWidth',2);
                 plot(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D,allo_X_bins_vector_of_centers_2D ,'color',spike_colors{ii_dir},'LineWidth',lwidth);
                 max_x = ceil(max(behavior_struct.co(ii_dir).firing_rate.allo_x_pos_fr_for_2D) );
-                if max_x~=0
+                if max_x~=0 &~isnan(max_x)
                     set(gca,'ylim',tunnel_limits,'YTick',[],'xlim',[0 max_x],'Xtick',max_x,'color',FR_colors{2});
                 end
                 str = sprintf('Hz');
@@ -487,7 +501,7 @@ for ii_cell =3:length(behavior_struct_names)
                             y_pos=y_pos_init(1)+dis_y_pos*(count-1);
                             axes('units','normalized','Position',[0.33+dir_adj y_pos 0.12 0.05]);
                             [ind_length,~,~]=find_length_of_consecutive_ind(find(~isnan(r)),length(r));
-                            if max(ind_length)>=0.5*length(r)
+                            if max(ind_length)>=min_r_length_per_field*length(r) & per_field(fr_i).number_of_spikes_per_field>min_n_spike_per_field
                   
                        
                             bins_center=dis_per_field_bin_vec_of_center;
@@ -683,20 +697,20 @@ for ii_cell =3:length(behavior_struct_names)
             
         %% save fig for n co:
         % less than 10:
-        n_co_thres=10;
-        if (behavior_struct.co(1).info.n_co<=n_co_thres) | (behavior_struct.co(2).info.n_co<=n_co_thres)
-            co_fig_folder_name_thresh=[co_fig_folder_name,'\ten_or_less_co\'];
-           
-            fig_name=fullfile(co_fig_folder_name_thresh,['cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
-            saveas(gcf,fig_name)
-        end
-        min_max_thresh=[10 15];
-        if ((behavior_struct.co(1).info.n_co>min_max_thresh(1))  &  (behavior_struct.co(1).info.n_co<=min_max_thresh(2)) ) | ((behavior_struct.co(2).info.n_co>min_max_thresh(1))  &  (behavior_struct.co(2).info.n_co<=min_max_thresh(2)) )
-            co_fig_folder_name_thresh=[co_fig_folder_name,'\ten_to_15\'];
-        
-            fig_name=fullfile(co_fig_folder_name_thresh,['cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
-            saveas(gcf,fig_name)
-        end
+%         n_co_thres=10;
+%         if (behavior_struct.co(1).info.n_co<=n_co_thres) | (behavior_struct.co(2).info.n_co<=n_co_thres)
+%             co_fig_folder_name_thresh=[co_fig_folder_name,'\ten_or_less_co\'];
+%            
+%             fig_name=fullfile(co_fig_folder_name_thresh,['cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
+%             saveas(gcf,fig_name)
+%         end
+%         min_max_thresh=[10 15];
+%         if ((behavior_struct.co(1).info.n_co>min_max_thresh(1))  &  (behavior_struct.co(1).info.n_co<=min_max_thresh(2)) ) | ((behavior_struct.co(2).info.n_co>min_max_thresh(1))  &  (behavior_struct.co(2).info.n_co<=min_max_thresh(2)) )
+%             co_fig_folder_name_thresh=[co_fig_folder_name,'\ten_to_15\'];
+%         
+%             fig_name=fullfile(co_fig_folder_name_thresh,['cell_',num2str(cell_num),'_day_',day,'_bat_',num2str(bat),'_field_width_type_',num2str(per_field_to_plot),'.png']);
+%             saveas(gcf,fig_name)
+%         end
     
 %         %% for CO signif cells save also in relevant dir:
 %         if signif==1
@@ -708,8 +722,8 @@ for ii_cell =3:length(behavior_struct_names)
     else
         continue
     end
-    catch
-    end
+%     catch
+%     end
 end
 close(gcf)
 
